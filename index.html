@@ -12,7 +12,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
         
-        body { font-family: 'Tajawal', sans-serif; background-color: #ffffff; overflow-x: hidden; }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f8f9fa; overflow-x: hidden; }
         
         /* Sidebar Styling */
         .sidebar {
@@ -82,33 +82,34 @@
         .text-purple { color: #6f42c1 !important; }
 
         .attendance-toggle { cursor: pointer; user-select: none; }
+        .evidence-img-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; margin: 2px; }
 
         /* --- Security Styles --- */
         body:not(.is-admin) { 
-            -webkit-user-select: none; 
-            -moz-user-select: none; 
-            -ms-user-select: none; 
-            user-select: none; 
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; 
         }
-        body:not(.is-admin) input, 
-        body:not(.is-admin) textarea, 
-        body:not(.is-admin) select { 
-            -webkit-user-select: text !important; 
-            -moz-user-select: text !important; 
-            -ms-user-select: text !important; 
-            user-select: text !important; 
+        body:not(.is-admin) input, body:not(.is-admin) textarea, body:not(.is-admin) select { 
+            -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; user-select: text !important; 
         }
 
         body:not(.is-admin) .admin-only { display: none !important; }
 
         @media print {
+            @page { size: A4; margin: 10mm; }
             .sidebar, .no-print, #login-section, .btn, .modal, .nav-tabs { display: none !important; }
-            .main-content { margin-right: 0; padding: 0; width: 100%; }
-            .section-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
-            body { background-color: white; font-size: 12pt; }
+            .main-content { margin-right: 0; padding: 0; width: 100%; background-color: white;}
+            .section-card { box-shadow: none; border: 0; page-break-inside: avoid; padding:0;}
+            body { background-color: white; font-size: 13pt; color: #000; }
             body.printing-notification * { visibility: hidden; }
             body.printing-notification #print-area-container, body.printing-notification #print-area-container * { visibility: visible; }
-            body.printing-notification #print-area-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; }
+            body.printing-notification #print-area-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            
+            .print-header-wrapper { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
+            .print-header-logo { max-height: 90px; max-width: 120px; object-fit: contain; }
+            .print-header-text { text-align: center; color: #2c3e50; line-height: 1.4; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .print-table th, .print-table td { border: 1px solid #dee2e6; padding: 12px; text-align: right; }
+            .print-table th { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; color: #000; font-weight: bold; }
         }
     </style>
     
@@ -123,8 +124,7 @@
                 if (!isAdmin()) { 
                     var tag = e.target.tagName;
                     if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-                        e.preventDefault(); 
-                        return false; 
+                        e.preventDefault(); return false; 
                     }
                 } 
             });
@@ -166,12 +166,12 @@
         </div>
     </div>
 
-    <!-- نافذة عرض صورة المخالفة -->
+    <!-- نافذة عرض صورة المخالفة/الشواهد -->
     <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true" style="z-index: 9990;">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title">المرفق</h5>
+                    <h5 class="modal-title">المرفق / الشاهد</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
@@ -190,7 +190,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="fas fa-exclamation-triangle ms-2"></i>البنود غير المرصودة</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div id="missing-items-content"></div>
@@ -245,9 +245,10 @@
                     <input type="hidden" id="manage-meet-id">
                     <h4 id="manage-meet-title" class="text-success mb-3 fw-bold"></h4>
                     
-                    <ul class="nav nav-tabs mb-3" role="tablist">
+                    <ul class="nav nav-tabs mb-3 no-print" role="tablist">
                         <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#meet-tab-details" type="button">التفاصيل والتوصيات</button></li>
-                        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#meet-tab-attendance" type="button">تسجيل الحضور</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#meet-tab-attendance" type="button">سجل الحضور</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#meet-tab-evidence" type="button">الشواهد والمرفقات</button></li>
                     </ul>
                     
                     <div class="tab-content">
@@ -255,6 +256,7 @@
                         <div class="tab-pane fade show active" id="meet-tab-details" role="tabpanel">
                             <div class="p-3 bg-white rounded border">
                                 <p><strong>تاريخ الاجتماع: </strong> <span id="manage-meet-date"></span></p>
+                                <p><strong>الوقت: </strong> <span id="manage-meet-time"></span></p>
                                 <hr>
                                 <h6 class="fw-bold text-secondary">محضر الاجتماع:</h6>
                                 <p id="manage-meet-minutes" style="white-space: pre-wrap; font-size: 0.95rem;"></p>
@@ -266,12 +268,22 @@
                         
                         <!-- سجل الحضور -->
                         <div class="tab-pane fade" id="meet-tab-attendance" role="tabpanel">
-                            <div class="alert alert-info small mb-2"><i class="fas fa-info-circle ms-1"></i> انقر على حالة العضو للتبديل بين الحضور والغياب، وسيتم الحفظ تلقائياً.</div>
+                            <div class="alert alert-info small mb-2 no-print"><i class="fas fa-info-circle ms-1"></i> انقر على حالة العضو للتبديل بين الحضور والغياب، وسيتم الحفظ تلقائياً.</div>
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover text-center align-middle" id="meet-attendance-table">
                                     <thead class="table-success"><tr><th>المعلم (العضو)</th><th>الحالة</th></tr></thead>
                                     <tbody></tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <!-- الشواهد والمرفقات -->
+                        <div class="tab-pane fade" id="meet-tab-evidence" role="tabpanel">
+                            <div class="p-3 bg-white rounded border">
+                                <h6 class="fw-bold text-secondary mb-3">الصور والشواهد المرفقة:</h6>
+                                <div id="manage-meet-evidences-container" class="d-flex flex-wrap gap-2">
+                                    <!-- يتم تعبئة الصور هنا -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -335,8 +347,34 @@
         </div>
 
         <div id="view-admin-structure" class="view-section hidden">
-            <h3 class="mb-4 text-primary"><i class="fas fa-cogs ms-2"></i>تهيئة الهيكل</h3>
+            <h3 class="mb-4 text-primary"><i class="fas fa-cogs ms-2"></i>الإعدادات والهيكل</h3>
             <div class="row">
+                <!-- إعدادات الشعارات للمطبوعات -->
+                <div class="col-lg-12 mb-4">
+                    <div class="section-card border-top border-4 border-primary">
+                        <h5 class="mb-3"><i class="fas fa-images ms-2"></i>إعدادات النظام (الشعارات والترويسة)</h5>
+                        <div class="alert alert-info small">هذه الشعارات ستظهر في أعلى صفحات الطباعة (للاجتماعات، التكليفات، والإشعارات).</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="small fw-bold mb-1">شعار الجهة / المدرسة (يمين):</label>
+                                <input type="file" id="setting-school-logo" accept="image/*" class="form-control" onchange="System.admin.saveLogo('school')">
+                                <div class="mt-2 text-center p-2 border rounded bg-light">
+                                    <img id="preview-school-logo" src="" alt="شعار المدرسة" style="max-height: 80px; display: none;">
+                                    <span id="txt-school-logo" class="text-muted small">لا يوجد شعار</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="small fw-bold mb-1">شعار القسم / الإدارة (يسار):</label>
+                                <input type="file" id="setting-dept-logo" accept="image/*" class="form-control" onchange="System.admin.saveLogo('dept')">
+                                <div class="mt-2 text-center p-2 border rounded bg-light">
+                                    <img id="preview-dept-logo" src="" alt="شعار القسم" style="max-height: 80px; display: none;">
+                                    <span id="txt-dept-logo" class="text-muted small">لا يوجد شعار</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-lg-6">
                     <div class="section-card">
                         <h5 class="border-bottom pb-2 mb-3">1. الهيكل الإداري</h5>
@@ -513,7 +551,6 @@
                         <button class="btn btn-warning btn-sm w-100 fw-bold" onclick="System.dashboard.renderWeeklyComparison()">عرض</button>
                     </div>
                 </div>
-
                  <div class="table-responsive">
                     <table class="table table-bordered table-hover text-center align-middle" id="weekly-comparison-table">
                         <thead class="table-warning"></thead>
@@ -613,9 +650,7 @@
                     <div class="col-md-3 d-flex align-items-end"><button onclick="System.results.loadClasses()" class="btn text-white w-100 fw-bold" style="background-color: #6f42c1;">عرض الفصول</button></div>
                 </div>
                 
-                <div id="res-entry-classes-container" class="mt-4">
-                    <!-- سيتم توليد الفصول وحقول الإدخال هنا -->
-                </div>
+                <div id="res-entry-classes-container" class="mt-4"></div>
 
                 <div id="manual-class-add-section" class="mt-4 p-3 border rounded bg-white shadow-sm hidden">
                     <h6 class="text-purple mb-3"><i class="fas fa-plus-circle ms-2"></i>إضافة فصل يدوياً (للفصول غير المسندة حالياً للمدرسة):</h6>
@@ -645,9 +680,7 @@
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover text-center align-middle" id="teacher-results-table">
-                        <thead class="table-light">
-                            <!-- الترويسة سيتم بناؤها ديناميكياً -->
-                        </thead>
+                        <thead class="table-light"></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -656,7 +689,6 @@
 
         <div id="view-notifications" class="view-section hidden">
             <h3 class="mb-4 text-primary">الإشعارات</h3>
-            
             <div class="section-card py-3 bg-light no-print">
                 <div class="row g-2 align-items-end">
                     <div class="col-md-3 admin-only">
@@ -765,7 +797,10 @@
                 <div class="row g-3">
                     <div class="col-md-6"><label class="small fw-bold">عنوان الاجتماع</label><input type="text" id="meet-title" class="form-control" placeholder="مثال: ورشة عمل حول استراتيجيات التعلم"></div>
                     <div class="col-md-3"><label class="small fw-bold">تاريخ الاجتماع</label><input type="date" id="meet-date" class="form-control"></div>
-                    <div class="col-md-3"><label class="small fw-bold">اليوم</label><input type="text" id="meet-day" class="form-control" placeholder="مثال: الأحد" readonly></div>
+                    <div class="col-md-3"><label class="small fw-bold">الوقت</label><input type="time" id="meet-time" class="form-control"></div>
+                    
+                    <div class="col-md-6"><label class="small fw-bold">اليوم</label><input type="text" id="meet-day" class="form-control" placeholder="مثال: الأحد" readonly></div>
+                    <div class="col-md-6"><label class="small fw-bold">الشواهد والمرفقات (صور)</label><input type="file" id="meet-evidence" accept="image/*" class="form-control" multiple></div>
                     
                     <div class="col-12">
                         <label class="small fw-bold mb-2">أعضاء الاجتماع (المعلمين المستهدفين): <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="System.meetings.selectAllMembers()">تحديد الكل</button></label>
@@ -784,7 +819,7 @@
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover text-center align-middle" id="meetings-table">
                         <thead class="table-success">
-                            <tr><th>العنوان</th><th>التاريخ</th><th>الأعضاء</th><th>الحضور</th><th>أدوات</th></tr>
+                            <tr><th>العنوان</th><th>التاريخ والوقت</th><th>الأعضاء</th><th>الحضور</th><th>أدوات</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -986,7 +1021,8 @@
             users: [{id: 1, name: 'Admin', username: 'admin', password: 'Ma@521990', role: 'admin', mobile: '966500000000', schoolId: null, scope: {}}],
             schools: [], subjects: [], weeks: [],
             criteria: [{id: 'c1', name: 'تحضير الدروس'}, {id: 'c2', name: 'استخدام التقنية'}, {id: 'c3', name: 'الواجبات'}, {id: 'c4', name: 'المشاركة الصفية'}],
-            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], archives: [], tasks: [], meetings: []
+            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], archives: [], tasks: [], meetings: [],
+            settings: { schoolLogo: '', deptLogo: '' }
         };
 
         const System = {
@@ -999,11 +1035,9 @@
                     if (docSnap.exists()) { 
                         this.data = docSnap.data(); 
                         
-                        // تهيئة المصفوفات لضمان عدم حدوث خطأ إذا كانت البيانات قديمة
                         const arraysToInit = ['users', 'schools', 'subjects', 'weeks', 'criteria', 'assignments', 'evaluations', 'procedures', 'notifications', 'visits', 'teacherResults', 'archives', 'tasks', 'meetings'];
-                        arraysToInit.forEach(key => {
-                            if (!this.data[key]) this.data[key] = [];
-                        });
+                        arraysToInit.forEach(key => { if (!this.data[key]) this.data[key] = []; });
+                        if(!this.data.settings) this.data.settings = { schoolLogo: '', deptLogo: '' };
                     } 
                     else { 
                         this.data = JSON.parse(JSON.stringify(defaultData)); 
@@ -1041,9 +1075,7 @@
 
             auth: {
                 login: function() {
-                    if (!System.data || !System.data.users) {
-                        return System.utils.showAlert('لم يكتمل الاتصال بقاعدة البيانات بعد، يرجى الانتظار أو تحديث الصفحة.');
-                    }
+                    if (!System.data || !System.data.users) return System.utils.showAlert('لم يكتمل الاتصال بقاعدة البيانات بعد.');
                     const u = document.getElementById('login-username').value;
                     const p = document.getElementById('login-password').value;
                     const user = System.data.users.find(x => x.username === u && x.password === p);
@@ -1067,9 +1099,8 @@
                     const roleMap = { 'admin':'مدير النظام', 'manager':'مدير تعليمي', 'supervisor':'مشرف', 'coordinator':'منسق', 'teacher':'معلم' };
                     document.getElementById('sidebar-role').innerText = roleMap[System.currentUser.role];
 
-                    if (System.currentUser.role === 'admin') {
-                        document.body.classList.add('is-admin');
-                    } else { document.body.classList.remove('is-admin'); }
+                    if (System.currentUser.role === 'admin') document.body.classList.add('is-admin');
+                    else document.body.classList.remove('is-admin');
 
                     System.ui.buildSidebar(); System.ui.updateNotificationCount();
                     
@@ -1117,9 +1148,7 @@
                             </div>
                         `;
 
-                        // إضافة قسم الاجتماعات
                         addLink('view-meetings', 'اجتماعات التنمية المهنية', 'fa-users-cog');
-
                         addLink('view-gaps', 'النواقص', 'fa-exclamation-circle'); 
                         addLink('view-procedures', 'الإجراءات والمخالفات', 'fa-gavel'); 
                         addLink('view-teacher-file', 'ملف المعلم', 'fa-id-card'); 
@@ -1133,31 +1162,19 @@
                     const target = document.getElementById(viewId); if(target) target.classList.remove('hidden');
                     const link = document.getElementById('link-' + viewId); if(link) link.classList.add('active');
                     
-                    const vMenu = document.getElementById('visitsMenu');
-                    if(viewId === 'view-visits-entry' || viewId === 'view-visits-report') {
-                        if(vMenu) vMenu.classList.add('show');
-                        const lVCol = document.getElementById('link-visits-collapse');
-                        if(lVCol) lVCol.classList.add('active');
-                    } else { if(vMenu) vMenu.classList.remove('show'); }
+                    const setColActive = (menuId, linkId, viewsArr) => {
+                        const m = document.getElementById(menuId); const l = document.getElementById(linkId);
+                        if(viewsArr.includes(viewId)) { if(m) m.classList.add('show'); if(l) l.classList.add('active'); }
+                        else { if(m) m.classList.remove('show'); }
+                    };
+                    setColActive('visitsMenu', 'link-visits-collapse', ['view-visits-entry', 'view-visits-report']);
+                    setColActive('resultsMenu', 'link-results-collapse', ['view-results-entry', 'view-results-report']);
+                    setColActive('tasksMenu', 'link-tasks-collapse', ['view-tasks-assign', 'view-tasks-list']);
 
-                    const resMenu = document.getElementById('resultsMenu');
-                    if(viewId === 'view-results-entry' || viewId === 'view-results-report') {
-                        if(resMenu) resMenu.classList.add('show');
-                        const lRCol = document.getElementById('link-results-collapse');
-                        if(lRCol) lRCol.classList.add('active');
-                    } else { if(resMenu) resMenu.classList.remove('show'); }
-
-                    const tasksMenu = document.getElementById('tasksMenu');
-                    if(viewId === 'view-tasks-assign' || viewId === 'view-tasks-list') {
-                        if(tasksMenu) tasksMenu.classList.add('show');
-                        const lTCol = document.getElementById('link-tasks-collapse');
-                        if(lTCol) lTCol.classList.add('active');
-                    } else { if(tasksMenu) tasksMenu.classList.remove('show'); }
-
-                    const titles = {'view-admin-structure':'الإعدادات', 'view-users':'المستخدمين', 'view-admin-assignments':'تسكين المعلمين', 'view-coordinator-entry':'إدخال البيانات', 'view-dashboard':'لوحة التحكم', 'view-notifications':'الإشعارات', 'view-reports':'التقارير', 'view-gaps': 'النواقص', 'view-weekly-comparison': 'المقارنات الأسبوعية', 'view-visits-entry': 'إدخال زيارة لمعلم', 'view-visits-report': 'متوسط نسبة الزيارات', 'view-results-entry': 'إدخال نتائج المعلم', 'view-results-report': 'معاينة نسب المعلم', 'view-archive': 'الأرشيف', 'view-tasks-assign': 'إسناد تكليف', 'view-tasks-list': 'معاينة التكليفات', 'view-meetings': 'اجتماعات التنمية المهنية'};
+                    const titles = {'view-admin-structure':'الإعدادات والهيكل', 'view-users':'المستخدمين', 'view-admin-assignments':'تسكين المعلمين', 'view-coordinator-entry':'إدخال البيانات', 'view-dashboard':'لوحة التحكم', 'view-notifications':'الإشعارات', 'view-reports':'التقارير', 'view-gaps': 'النواقص', 'view-weekly-comparison': 'المقارنات الأسبوعية', 'view-visits-entry': 'إدخال زيارة لمعلم', 'view-visits-report': 'متوسط نسبة الزيارات', 'view-results-entry': 'إدخال نتائج المعلم', 'view-results-report': 'معاينة نسب المعلم', 'view-archive': 'الأرشيف', 'view-tasks-assign': 'إسناد تكليف', 'view-tasks-list': 'معاينة التكليفات', 'view-meetings': 'اجتماعات التنمية المهنية'};
                     document.getElementById('page-header-title').innerText = titles[viewId] || '';
 
-                    if(viewId === 'view-admin-structure') System.admin.renderAllLists();
+                    if(viewId === 'view-admin-structure') { System.admin.renderAllLists(); System.admin.renderLogosPreview(); }
                     if(viewId === 'view-users') System.admin.initUserView();
                     if(viewId === 'view-admin-assignments') System.admin.initAssignmentsView(); 
                     if(viewId === 'view-coordinator-entry') System.coordinator.init();
@@ -1226,6 +1243,34 @@
                         container.innerHTML += html; 
                     }); 
                 },
+                saveLogo: async function(type) {
+                    const input = document.getElementById(`setting-${type}-logo`);
+                    if(input.files && input.files[0]) {
+                        try {
+                            const b64 = await System.utils.fileToBase64Compressed(input.files[0], 500, 500); // smaller max bounds for logo
+                            if(!System.data.settings) System.data.settings = {};
+                            if(type === 'school') System.data.settings.schoolLogo = b64;
+                            if(type === 'dept') System.data.settings.deptLogo = b64;
+                            System.save();
+                            this.renderLogosPreview();
+                            System.utils.showAlert('تم حفظ الشعار بنجاح.');
+                        } catch(e) {
+                            System.utils.showAlert('حدث خطأ أثناء معالجة الصورة.');
+                        }
+                    }
+                },
+                renderLogosPreview: function() {
+                    const sLogo = System.data.settings?.schoolLogo;
+                    const dLogo = System.data.settings?.deptLogo;
+                    
+                    const sp = document.getElementById('preview-school-logo');
+                    const st = document.getElementById('txt-school-logo');
+                    if(sLogo) { sp.src = sLogo; sp.style.display = 'inline-block'; st.style.display = 'none'; }
+                    
+                    const dp = document.getElementById('preview-dept-logo');
+                    const dt = document.getElementById('txt-dept-logo');
+                    if(dLogo) { dp.src = dLogo; dp.style.display = 'inline-block'; dt.style.display = 'none'; }
+                },
                 editStage: function(sid, stid) { const s = System.data.schools.find(x=>x.id==sid); const st = s.stages.find(x=>x.id==stid); const n = prompt('تعديل المرحلة', st.name); if(n) { st.name=n; System.save(); this.renderAllLists(); } },
                 deleteStage: function(sid, stid) { if(confirm('حذف المرحلة؟')) { const s = System.data.schools.find(x=>x.id==sid); s.stages = s.stages.filter(x=>x.id!=stid); System.save(); this.renderAllLists(); } },
                 editGrade: function(sid, stid, gid) { const s = System.data.schools.find(x=>x.id==sid); const st = s.stages.find(x=>x.id==stid); const g = st.grades.find(x=>x.id==gid); const n = prompt('تعديل الصف', g.name); if(n) { g.name=n; System.save(); this.renderAllLists(); } },
@@ -1241,12 +1286,14 @@
                 addCriteria: function() { const n = document.getElementById('new-criteria-name').value; if(n) { if(!System.data.criteria) System.data.criteria = []; System.data.criteria.push({id: Date.now(), name: n}); System.save(); this.renderList('criteria', System.data.criteria); document.getElementById('new-criteria-name').value=''; } },
                 editItem: function(type, id) { const isNum = type !== 'criteria' && type !== 'weeks' && type !== 'subjects'; const searchId = isNum ? parseInt(id) : id; const item = System.data[type].find(x => x.id == searchId); if(item) { const newName = prompt('تعديل:', item.name); if(newName && newName !== item.name) { item.name = newName; System.save(); this.renderAllLists(); } } },
                 deleteItem: function(type, id) { if(confirm('حذف؟')) { if(type==='schools') id=parseInt(id); else id=isNaN(id)?id:parseInt(id); System.data[type] = System.data[type].filter(x => x.id !== id); System.save(); this.renderAllLists(); } },
+                
                 initUserView: function() { const schSel = document.getElementById('user-school-select'); schSel.innerHTML = '<option value="">اختر المدرسة</option>'; System.data.schools.forEach(s => schSel.innerHTML += `<option value="${s.id}">${s.name}</option>`); const subSel = document.getElementById('user-subject-select'); subSel.innerHTML = '<option value="">اختر المادة</option>'; System.data.subjects.forEach(s => subSel.innerHTML += `<option value="${s.id}">${s.name}</option>`); this.renderUsersTable(); },
                 saveUser: function() { const id = document.getElementById('user-edit-id').value; const name = document.getElementById('user-fullname').value; const username = document.getElementById('user-username').value; const mobile = document.getElementById('user-mobile').value; const password = document.getElementById('user-password').value; const role = document.getElementById('user-role').value; const schoolId = parseInt(document.getElementById('user-school-select').value); const subjectId = document.getElementById('user-subject-select').value; if(!name || !username || !schoolId || !mobile) return System.utils.showAlert('بيانات ناقصة'); const scope = { stageIds: [], gradeIds: [] }; document.querySelectorAll('.scope-check:checked').forEach(cb => { const [st, gr] = cb.value.split('|'); if(!scope.stageIds.includes(st)) scope.stageIds.push(st); scope.gradeIds.push(gr); }); const generatedPass = System.utils.generatePassword(); const finalPassword = password ? password : (id ? null : generatedPass); const userObj = { id: id ? parseInt(id) : Date.now(), name, username, role, schoolId, mobile, subjectId: subjectId?parseInt(subjectId):null, scope }; if (finalPassword) userObj.password = finalPassword; else { const existing = System.data.users.find(u=>u.id==id); if(existing) userObj.password = existing.password; else userObj.password = generatedPass; } if(id) { const idx = System.data.users.findIndex(u=>u.id==id); System.data.users[idx] = {...System.data.users[idx], ...userObj}; } else { System.data.users.push(userObj); } System.save(); this.cancelEditUser(); this.renderUsersTable(); },
                 renderUsersTable: function() { const tbody = document.getElementById('users-table-body'); tbody.innerHTML = ''; System.data.users.forEach(u => { const sName = System.data.schools.find(s=>s.id === u.schoolId)?.name || '-'; tbody.innerHTML += `<tr><td>${u.name}</td><td>${u.username}</td><td>${u.password}</td><td>${u.mobile||'-'}</td><td>${u.role}</td><td>${sName}</td><td><button class="btn btn-sm btn-warning" onclick="System.admin.loadUser(${u.id})"><i class="fas fa-pen"></i></button> <button class="btn btn-sm btn-danger" onclick="System.admin.delUser(${u.id})"><i class="fas fa-trash"></i></button></td></tr>`; }); },
                 loadUser: function(id) { const u = System.data.users.find(x => x.id === id); document.getElementById('user-edit-id').value = u.id; document.getElementById('user-fullname').value = u.name; document.getElementById('user-username').value = u.username; document.getElementById('user-password').value = u.password; document.getElementById('user-mobile').value = u.mobile || ''; document.getElementById('user-role').value = u.role; document.getElementById('user-school-select').value = u.schoolId; System.ui.toggleUserFields(); if(u.subjectId) document.getElementById('user-subject-select').value = u.subjectId; setTimeout(() => { if(u.scope && u.scope.gradeIds) u.scope.gradeIds.forEach(gid => { const cb = document.querySelector(`.scope-check[value*="${gid}"]`); if(cb) cb.checked = true; }); }, 100); document.getElementById('btn-save-user').innerText = 'تحديث'; document.getElementById('btn-cancel-user').classList.remove('hidden'); },
                 cancelEditUser: function() { document.getElementById('user-edit-id').value = ''; document.getElementById('user-fullname').value = ''; document.getElementById('user-username').value = ''; document.getElementById('user-password').value = ''; document.getElementById('user-mobile').value = ''; document.getElementById('user-school-select').value = ''; document.getElementById('btn-save-user').innerText = 'حفظ'; document.getElementById('btn-cancel-user').classList.add('hidden'); document.getElementById('scope-options').innerHTML = ''; },
                 delUser: function(id) { if(confirm('حذف؟')) { System.data.users = System.data.users.filter(u => u.id !== id); System.save(); this.renderUsersTable(); } },
+                
                 initAssignmentsView: function() { const schSel = document.getElementById('assign-school'); schSel.innerHTML = '<option value="">اختر المدرسة</option>'; System.data.schools.forEach(s => schSel.innerHTML += `<option value="${s.id}">${s.name}</option>`); const subSel = document.getElementById('assign-subject'); subSel.innerHTML = '<option value="">المادة الافتراضية</option>'; System.data.subjects.forEach(s => subSel.innerHTML += `<option value="${s.id}">${s.name}</option>`); this.renderCurrentAssignments(); },
                 updateAssignStages: function() { System.ui.updateStagesDropdown('assign-school', 'assign-stage'); },
                 updateAssignGrades: function() { System.ui.updateGradesDropdown('assign-school', 'assign-stage', 'assign-grade'); },
@@ -1264,7 +1311,8 @@
                             users: [adminUser],
                             schools: [], subjects: [], weeks: [],
                             criteria: [{id: 'c1', name: 'تحضير الدروس'}, {id: 'c2', name: 'استخدام التقنية'}, {id: 'c3', name: 'الواجبات'}, {id: 'c4', name: 'المشاركة الصفية'}],
-                            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], archives: [], tasks: [], meetings: []
+                            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], archives: [], tasks: [], meetings: [],
+                            settings: System.data.settings
                         };
                         System.save();
                         alert("تم مسح كافة البيانات وتفريغ المنصة بنجاح.");
@@ -1332,6 +1380,651 @@
                         System.save();
                         this.renderArchive();
                     }
+                }
+            },
+
+            utils: {
+                generatePassword: function() { return Math.random().toString(36).slice(-8); },
+                showAlert: function(msg) {
+                    document.getElementById('customAlertBody').innerText = msg;
+                    const modalEl = document.getElementById('customAlertModal');
+                    let alertModal = bootstrap.Modal.getInstance(modalEl);
+                    if (!alertModal) alertModal = new bootstrap.Modal(modalEl);
+                    alertModal.show();
+                },
+                sendWhatsapp: function(mobile, teacherId, msg, missingItemsStr) { 
+                    if(!mobile) return; 
+                    const today = new Date(); 
+                    System.data.notifications.push({ id: Date.now(), teacherId: parseInt(teacherId), type: 'whatsapp_alert', date: today.toISOString().split('T')[0], day: '-', details: msg, missing: missingItemsStr }); 
+                    System.save(); 
+                    System.ui.updateNotificationCount(); 
+                    window.open(`https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`, '_blank'); 
+                },
+                getPrintHeader: function(titleText) {
+                    const sLogo = System.data.settings?.schoolLogo || '';
+                    const dLogo = System.data.settings?.deptLogo || '';
+                    return `
+                        <div class="print-header-wrapper">
+                            <div style="width: 25%; text-align: right;">
+                                ${sLogo ? `<img src="${sLogo}" class="print-header-logo">` : ''}
+                            </div>
+                            <div class="print-header-text" style="width: 50%;">
+                                <h3 style="margin:0; font-weight:bold;">المملكة العربية السعودية</h3>
+                                <h4 style="margin:5px 0;">وزارة التعليم</h4>
+                                <h2 style="margin:15px 0; font-weight:bold; color:#0d6efd; text-decoration: underline;">${titleText}</h2>
+                            </div>
+                            <div style="width: 25%; text-align: left;">
+                                ${dLogo ? `<img src="${dLogo}" class="print-header-logo">` : ''}
+                            </div>
+                        </div>
+                    `;
+                },
+                printAllNotifications: function() { 
+                    if(System.data.notifications.length === 0) return System.utils.showAlert('لا توجد إشعارات'); 
+                    let html = `<div style="direction: rtl; text-align: right; padding: 20px; font-family: 'Tajawal', sans-serif;">`;
+                    html += this.getPrintHeader('سجل التواصل والإشعارات');
+                    html += `<table class="print-table"><thead><tr><th>التاريخ</th><th>المعلم</th><th>التفاصيل</th></tr></thead><tbody>`; 
+                    [...System.data.notifications].reverse().forEach(n => { 
+                        const t = System.data.users.find(u => u.id === n.teacherId)?.name || 'غير معروف'; 
+                        const fullText = n.details + (n.missing ? `<br><small><b>النواقص:</b> ${n.missing}</small>` : ''); 
+                        html += `<tr><td>${n.date}</td><td>${t}</td><td>${fullText}</td></tr>`; 
+                    }); 
+                    html += `</tbody></table></div>`; 
+                    document.getElementById('print-area-container').innerHTML = html; 
+                    document.body.classList.add('printing-notification'); 
+                    window.print(); 
+                    document.body.classList.remove('printing-notification'); 
+                },
+                getSubjectName: function(id) { return System.data.subjects.find(s=>s.id == id)?.name || ''; },
+                populateSchools: function(selectId) {
+                    const sel = document.getElementById(selectId);
+                    if(!sel) return;
+                    sel.innerHTML = '<option value="all">كل المدارس</option>';
+                    System.data.schools.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+                },
+                fileToBase64Compressed: function(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = event => {
+                            const img = new Image();
+                            img.src = event.target.result;
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > maxWidth) {
+                                        height = Math.round((height *= maxWidth / width));
+                                        width = maxWidth;
+                                    }
+                                } else {
+                                    if (height > maxHeight) {
+                                        width = Math.round((width *= maxHeight / height));
+                                        height = maxHeight;
+                                    }
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                resolve(canvas.toDataURL('image/jpeg', quality));
+                            };
+                            img.onerror = error => reject(error);
+                        };
+                        reader.onerror = error => reject(error);
+                    });
+                }
+            },
+
+            tasks: {
+                initAssign: function() {
+                    System.utils.populateSchools('task-assign-school');
+                    document.getElementById('task-assign-date').valueAsDate = new Date();
+                    this.updateAssignTeachers();
+                    this.renderAssignList();
+                },
+                updateAssignTeachers: function() {
+                    const sel = document.getElementById('task-assign-teacher');
+                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
+                    const filterSchool = document.getElementById('task-assign-school').value;
+                    const user = System.currentUser;
+
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
+                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        }
+                    });
+                },
+                add: function() {
+                    const teacherId = parseInt(document.getElementById('task-assign-teacher').value);
+                    const date = document.getElementById('task-assign-date').value;
+                    const title = document.getElementById('task-assign-title').value.trim();
+                    const details = document.getElementById('task-assign-details').value.trim();
+
+                    if(!teacherId || !date || !title) return System.utils.showAlert('الرجاء إكمال البيانات الأساسية (المعلم، التاريخ، العنوان).');
+
+                    const newTask = {
+                        id: Date.now(),
+                        assignedTo: teacherId,
+                        assignedBy: System.currentUser.id,
+                        assignerName: System.currentUser.name,
+                        date: date,
+                        title: title,
+                        details: details,
+                        status: 'pending', 
+                        executionNotes: ''
+                    };
+
+                    System.data.tasks.push(newTask);
+                    System.save();
+                    System.utils.showAlert('تم إسناد التكليف بنجاح.');
+                    
+                    document.getElementById('task-assign-title').value = '';
+                    document.getElementById('task-assign-details').value = '';
+                    this.renderAssignList();
+                },
+                // دمج المقطع المطلوب من المستخدم: renderAssignList بشكل دقيق
+                renderAssignList: function() {
+                    const tbody = document.querySelector('#tasks-assign-table tbody');
+                    tbody.innerHTML = '';
+                    const myTasks = System.data.tasks.filter(t => t.assignedBy === System.currentUser.id).reverse().slice(0, 10);
+                    
+                    if(myTasks.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لم تقم بإسناد أي تكليفات بعد.</td></tr>';
+                        return;
+                    }
+
+                    myTasks.forEach(t => {
+                        const teacher = System.data.users.find(u => u.id === t.assignedTo)?.name || 'غير معروف';
+                        let statusBadge = '<span class="badge bg-secondary">قيد الانتظار</span>';
+                        if(t.status === 'done') statusBadge = '<span class="badge bg-success">تم التنفيذ</span>';
+                        if(t.status === 'not_done') statusBadge = '<span class="badge bg-danger">لم يتم التنفيذ</span>';
+
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold text-primary cursor-pointer text-decoration-underline" onclick="System.tasks.printTask(${t.id})"><i class="fas fa-external-link-alt ms-1 text-secondary"></i>${t.title}</td>
+                            <td class="fw-bold">${teacher}</td>
+                            <td><span class="badge bg-light text-dark border">${t.date}</span></td>
+                            <td>${statusBadge}</td>
+                            <td class="no-print"><button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="System.tasks.deleteTask(${t.id})"><i class="fas fa-trash"></i></button></td>
+                        </tr>`;
+                    });
+                },
+                deleteTask: function(id) { 
+                    if(confirm('تنبيه هام: إلغاء التكليف سيحذفه كلياً من سجلات المعلم المنفذ. متابعة؟')) { 
+                        System.data.tasks = System.data.tasks.filter(t => t.id !== id); 
+                        System.save(); 
+                        this.renderAssignList(); 
+                    } 
+                },
+                initList: function() {
+                    System.utils.populateSchools('task-list-school');
+                    this.updateListFilters();
+                },
+                updateListFilters: function() {
+                    const sel = document.getElementById('task-list-teacher');
+                    sel.innerHTML = '<option value="all">كل المعلمين</option>';
+                    const filterSchool = document.getElementById('task-list-school').value;
+                    const user = System.currentUser;
+
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
+                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        }
+                    });
+                    this.renderList();
+                },
+                renderList: function() {
+                    const tbody = document.querySelector('#tasks-list-table tbody');
+                    tbody.innerHTML = '';
+                    
+                    const filterSchool = document.getElementById('task-list-school').value;
+                    const filterTeacher = document.getElementById('task-list-teacher').value;
+                    const filterStatus = document.getElementById('task-list-status').value;
+                    const user = System.currentUser;
+
+                    let filtered = [...System.data.tasks].reverse().filter(task => {
+                        const t = System.data.users.find(u => u.id === task.assignedTo);
+                        if(!t) return false;
+
+                        if (['admin', 'supervisor', 'manager'].includes(user.role) && filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
+                        if (!['admin', 'supervisor', 'manager'].includes(user.role) && t.schoolId !== user.schoolId) return false;
+                        if (filterTeacher !== 'all' && t.id != filterTeacher) return false;
+                        if (filterStatus !== 'all' && task.status !== filterStatus) return false;
+
+                        if(user.role === 'coordinator') {
+                            const teacherAssigns = System.data.assignments.filter(a => a.teacherId === t.id);
+                            let inScope = false;
+                            for(let a of teacherAssigns) {
+                                const gid = System.dashboard.getGradeId(a.classId);
+                                if (user.scope?.gradeIds?.includes(gid)) { inScope = true; break; }
+                            }
+                            if(!inScope) return false;
+                        }
+                        return true;
+                    });
+
+                    if(filtered.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-muted">لا توجد تكليفات مطابقة للبحث</td></tr>';
+                        return;
+                    }
+
+                    filtered.forEach(task => {
+                        const teacherName = System.data.users.find(u => u.id === task.assignedTo)?.name || 'غير معروف';
+                        
+                        let statusText = '<span class="text-secondary fw-bold"><i class="fas fa-clock ms-1"></i>قيد الانتظار</span>';
+                        if(task.status === 'done') statusText = '<span class="text-success fw-bold"><i class="fas fa-check-circle ms-1"></i>تم التنفيذ</span>';
+                        if(task.status === 'not_done') statusText = '<span class="text-danger fw-bold"><i class="fas fa-times-circle ms-1"></i>لم يتم التنفيذ</span>';
+
+                        const allowUpdate = (user.role === 'admin' || user.id === task.assignedBy || user.role === 'coordinator' || user.role === 'supervisor');
+
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold text-primary cursor-pointer text-decoration-underline" onclick="System.tasks.printTask(${task.id})"><i class="fas fa-external-link-alt ms-1"></i>${task.title}</td>
+                            <td class="fw-bold">${teacherName}</td>
+                            <td>${task.assignerName}</td>
+                            <td><span class="badge bg-light text-dark border">${task.date}</span></td>
+                            <td>${statusText}</td>
+                            <td class="small text-start" style="white-space: pre-wrap; max-width: 250px;">${task.executionNotes || '-'}</td>
+                            <td>
+                                ${allowUpdate ? `<button class="btn btn-sm btn-outline-info fw-bold shadow-sm" onclick="System.tasks.openStatusModal(${task.id})"><i class="fas fa-edit ms-1"></i>تحديث الحالة</button>` : '-'}
+                            </td>
+                        </tr>`;
+                    });
+                },
+                openStatusModal: function(id) {
+                    const task = System.data.tasks.find(t => t.id === id);
+                    if(!task) return;
+                    document.getElementById('task-status-id').value = id;
+                    document.getElementById('task-status-select').value = task.status === 'pending' ? 'done' : task.status;
+                    document.getElementById('task-status-notes').value = task.executionNotes || '';
+                    new bootstrap.Modal(document.getElementById('taskStatusModal')).show();
+                },
+                saveStatus: function() {
+                    const id = parseInt(document.getElementById('task-status-id').value);
+                    const status = document.getElementById('task-status-select').value;
+                    const notes = document.getElementById('task-status-notes').value.trim();
+
+                    const task = System.data.tasks.find(t => t.id === id);
+                    if(task) {
+                        task.status = status;
+                        task.executionNotes = notes;
+                        System.save();
+                        System.utils.showAlert('تم تحديث حالة التكليف بنجاح.');
+                        bootstrap.Modal.getInstance(document.getElementById('taskStatusModal')).hide();
+                        this.renderList();
+                        this.renderAssignList();
+                    }
+                },
+                printTask: function(id) {
+                    const task = System.data.tasks.find(t => t.id === id);
+                    if(!task) return;
+                    const teacher = System.data.users.find(u => u.id === task.assignedTo);
+                    const tName = teacher ? teacher.name : 'غير معروف';
+                    
+                    let statusHtml = 'قيد الانتظار';
+                    if(task.status === 'done') statusHtml = 'تم التنفيذ';
+                    if(task.status === 'not_done') statusHtml = 'لم يتم التنفيذ';
+
+                    const content = `
+                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
+                            ${System.utils.getPrintHeader('قرار تكليف رسمي')}
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="margin-bottom: 10px; font-weight: bold; background: #e9ecef; padding: 10px; border-radius: 5px;">موضوع التكليف: ${task.title}</h4>
+                                <div style="padding: 15px; border-right: 4px solid #0d6efd; white-space: pre-wrap; line-height: 1.8;">${task.details}</div>
+                            </div>
+                            <table class="print-table">
+                                <tr><th style="width: 25%;">المعلم المكلَّف</th><td>${tName}</td></tr>
+                                <tr><th>المكلِّف (المُصدر)</th><td>${task.assignerName}</td></tr>
+                                <tr><th>تاريخ الإصدار</th><td>${task.date}</td></tr>
+                                <tr><th>حالة التنفيذ</th><td>${statusHtml}</td></tr>
+                                ${task.status !== 'pending' ? `<tr><th>ملاحظات التنفيذ</th><td style="white-space: pre-wrap;">${task.executionNotes || '-'}</td></tr>` : ''}
+                            </table>
+                            <div style="margin-top: 50px; display: flex; justify-content: space-between; page-break-inside: avoid;">
+                                <div style="text-align: center;">
+                                    <strong>توقيع المعلم المكلَّف بالاستلام</strong>
+                                    <div style="margin-top: 20px; border-bottom: 1px dashed #000; width: 150px;"></div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <strong>توقيع الإدارة / المكلِّف</strong>
+                                    <div style="margin-top: 20px; border-bottom: 1px dashed #000; width: 150px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('print-area-container').innerHTML = content;
+                    document.body.classList.add('printing-notification');
+                    window.print();
+                    document.body.classList.remove('printing-notification');
+                }
+            },
+
+            meetings: {
+                init: function() {
+                    const dateInput = document.getElementById('meet-date');
+                    dateInput.valueAsDate = new Date();
+                    
+                    const timeInput = document.getElementById('meet-time');
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    timeInput.value = `${hours}:${minutes}`;
+
+                    this.updateDayName(dateInput.value);
+                    dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
+
+                    this.renderMembersSelect();
+                    this.renderList();
+                },
+                updateDayName: function(dateStr) {
+                    if(!dateStr) return;
+                    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                    const d = new Date(dateStr);
+                    document.getElementById('meet-day').value = days[d.getDay()];
+                },
+                renderMembersSelect: function() {
+                    const container = document.getElementById('meet-members-container');
+                    container.innerHTML = '';
+                    const user = System.currentUser;
+                    
+                    let teachers = System.data.users.filter(u => u.role === 'teacher');
+                    if (!['admin', 'supervisor', 'manager'].includes(user.role)) {
+                        teachers = teachers.filter(t => t.schoolId === user.schoolId);
+                    }
+
+                    if(teachers.length === 0) {
+                        container.innerHTML = '<span class="text-muted">لا يوجد معلمين مسجلين.</span>';
+                        return;
+                    }
+
+                    teachers.forEach(t => {
+                        container.innerHTML += `
+                            <div class="form-check border p-2 rounded bg-white shadow-sm">
+                                <input class="form-check-input meet-member-check" type="checkbox" value="${t.id}" id="meet_mem_${t.id}">
+                                <label class="form-check-label cursor-pointer fw-bold" for="meet_mem_${t.id}">${t.name}</label>
+                            </div>
+                        `;
+                    });
+                },
+                selectAllMembers: function() {
+                    const checks = document.querySelectorAll('.meet-member-check');
+                    let allChecked = true;
+                    checks.forEach(c => { if(!c.checked) allChecked = false; });
+                    checks.forEach(c => c.checked = !allChecked);
+                },
+                add: async function() {
+                    const title = document.getElementById('meet-title').value.trim();
+                    const date = document.getElementById('meet-date').value;
+                    const time = document.getElementById('meet-time').value;
+                    const day = document.getElementById('meet-day').value;
+                    const minutes = document.getElementById('meet-minutes').value.trim();
+                    const recommendations = document.getElementById('meet-recommendations').value.trim();
+                    const evidenceInput = document.getElementById('meet-evidence');
+                    
+                    const selectedMembers = [];
+                    document.querySelectorAll('.meet-member-check:checked').forEach(cb => {
+                        selectedMembers.push({ teacherId: parseInt(cb.value), present: true });
+                    });
+
+                    if(!title || !date || selectedMembers.length === 0) {
+                        return System.utils.showAlert('الرجاء كتابة عنوان الاجتماع وتحديد التاريخ واختيار عضو واحد على الأقل.');
+                    }
+
+                    // Process images
+                    let evidencesBase64 = [];
+                    if(evidenceInput.files && evidenceInput.files.length > 0) {
+                        System.utils.showAlert("جاري معالجة الصور... يرجى الانتظار");
+                        for(let i=0; i<evidenceInput.files.length; i++) {
+                            const file = evidenceInput.files[i];
+                            if(file.size > 3000000) {
+                                System.utils.showAlert(`حجم الصورة ${file.name} كبير جداً، سيتم تخطيها.`);
+                                continue;
+                            }
+                            try {
+                                const b64 = await System.utils.fileToBase64Compressed(file, 800, 800, 0.6);
+                                evidencesBase64.push(b64);
+                            } catch(e) {
+                                console.error(e);
+                            }
+                        }
+                    }
+
+                    const newMeeting = {
+                        id: Date.now(),
+                        creatorId: System.currentUser.id,
+                        schoolId: System.currentUser.schoolId,
+                        title: title,
+                        date: date,
+                        time: time,
+                        day: day,
+                        minutes: minutes,
+                        recommendations: recommendations,
+                        members: selectedMembers,
+                        evidences: evidencesBase64
+                    };
+
+                    System.data.meetings.push(newMeeting);
+                    System.save();
+                    System.utils.showAlert('تم حفظ الاجتماع المهني بنجاح.');
+                    
+                    // Reset Form
+                    document.getElementById('meet-title').value = '';
+                    document.getElementById('meet-minutes').value = '';
+                    document.getElementById('meet-recommendations').value = '';
+                    document.getElementById('meet-evidence').value = '';
+                    document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
+                    
+                    this.renderList();
+                },
+                renderList: function() {
+                    const tbody = document.querySelector('#meetings-table tbody');
+                    tbody.innerHTML = '';
+                    const user = System.currentUser;
+
+                    let myMeetings = [...System.data.meetings].reverse();
+                    if(!['admin', 'supervisor', 'manager'].includes(user.role)) {
+                        myMeetings = myMeetings.filter(m => m.schoolId === user.schoolId);
+                    }
+
+                    if(myMeetings.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد اجتماعات مهنية مسجلة.</td></tr>';
+                        return;
+                    }
+
+                    myMeetings.forEach(m => {
+                        const membersCount = m.members.length;
+                        const presentCount = m.members.filter(mem => mem.present).length;
+                        const percentage = membersCount > 0 ? Math.round((presentCount / membersCount) * 100) : 0;
+                        const allowEdit = user.role === 'admin' || m.creatorId === user.id;
+                        const timeStr = m.time ? m.time : '';
+
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold text-success cursor-pointer text-decoration-underline" onclick="System.meetings.openDetails(${m.id})"><u><i class="fas fa-file-alt ms-1 text-secondary"></i>${m.title}</u></td>
+                            <td><span class="badge bg-light text-dark border">${m.date} - ${timeStr}</span></td>
+                            <td>${membersCount}</td>
+                            <td><span class="badge bg-${percentage >= 80 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}">${percentage}%</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info text-white shadow-sm" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
+                                ${allowEdit ? `<button class="btn btn-sm btn-outline-danger shadow-sm ms-1" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
+                            </td>
+                        </tr>`;
+                    });
+                },
+                openDetails: function(id) {
+                    const m = System.data.meetings.find(x => x.id === id);
+                    if(!m) return;
+                    
+                    document.getElementById('manage-meet-id').value = m.id;
+                    document.getElementById('manage-meet-title').innerText = m.title;
+                    document.getElementById('manage-meet-date').innerText = `${m.date} (${m.day})`;
+                    document.getElementById('manage-meet-time').innerText = m.time || 'غير محدد';
+                    document.getElementById('manage-meet-minutes').innerText = m.minutes || 'لا يوجد محضر مسجل.';
+                    document.getElementById('manage-meet-rec').innerText = m.recommendations || 'لا توجد توصيات.';
+
+                    const attTbody = document.querySelector('#meet-attendance-table tbody');
+                    attTbody.innerHTML = '';
+                    
+                    m.members.forEach(mem => {
+                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
+                        const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
+                        const text = mem.present ? 'حاضر' : 'غائب';
+                        const icon = mem.present ? 'fa-check' : 'fa-times';
+                        
+                        attTbody.innerHTML += `<tr>
+                            <td class="fw-bold">${tName}</td>
+                            <td>
+                                <span class="badge ${badgeClass} fs-6 attendance-toggle shadow-sm" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
+                                    <i class="fas ${icon} ms-1"></i>${text}
+                                </span>
+                            </td>
+                        </tr>`;
+                    });
+
+                    const evContainer = document.getElementById('manage-meet-evidences-container');
+                    evContainer.innerHTML = '';
+                    if(m.evidences && m.evidences.length > 0) {
+                        m.evidences.forEach(evB64 => {
+                            const img = document.createElement('img');
+                            img.src = evB64;
+                            img.className = 'evidence-img-thumb';
+                            img.onclick = () => {
+                                document.getElementById('preview-image-elem').src = evB64;
+                                document.getElementById('download-image-btn').href = evB64;
+                                new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                            };
+                            evContainer.appendChild(img);
+                        });
+                    } else {
+                        evContainer.innerHTML = '<span class="text-muted small">لا توجد صور أو شواهد مرفقة.</span>';
+                    }
+
+                    new bootstrap.Modal(document.getElementById('meetingDetailsModal')).show();
+                },
+                toggleAttendance: function(meetId, teacherId) {
+                    const m = System.data.meetings.find(x => x.id === meetId);
+                    if(!m) return;
+                    
+                    if(System.currentUser.role !== 'admin' && m.creatorId !== System.currentUser.id) {
+                        return System.utils.showAlert('لا تملك صلاحية تعديل الحضور لهذا الاجتماع.');
+                    }
+
+                    const mem = m.members.find(x => x.teacherId === teacherId);
+                    if(mem) {
+                        mem.present = !mem.present;
+                        System.save();
+                        this.openDetails(meetId);
+                        this.renderList();
+                    }
+                },
+                deleteMeeting: function(id) {
+                    if(confirm('هل أنت متأكد من حذف هذا الاجتماع نهائياً؟')) {
+                        System.data.meetings = System.data.meetings.filter(m => m.id !== id);
+                        System.save();
+                        this.renderList();
+                    }
+                },
+                printMeeting: function() {
+                    const id = parseInt(document.getElementById('manage-meet-id').value);
+                    const m = System.data.meetings.find(x => x.id === id);
+                    if(!m) return;
+
+                    let presentList = [];
+                    let absentList = [];
+                    m.members.forEach(mem => {
+                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'غير معروف';
+                        if(mem.present) presentList.push(tName);
+                        else absentList.push(tName);
+                    });
+
+                    const creatorName = System.data.users.find(u => u.id === m.creatorId)?.name || 'الإدارة';
+
+                    // Prepare Evidence Images block for printing
+                    let evidenceHtml = '';
+                    if(m.evidences && m.evidences.length > 0) {
+                        evidenceHtml = `
+                            <div style="margin-top: 30px; page-break-inside: avoid;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">الشواهد والمرفقات:</h5>
+                                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
+                                    ${m.evidences.map(img => `<img src="${img}" style="max-width: 45%; max-height: 250px; border: 1px solid #ccc; padding: 5px; border-radius: 5px;">`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    const content = `
+                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
+                            ${System.utils.getPrintHeader('محضر اجتماع تنمية مهنية')}
+                            
+                            <table class="print-table">
+                                <tr>
+                                    <th style="width: 20%;">عنوان الاجتماع</th>
+                                    <td colspan="3"><strong style="font-size: 1.2rem;">${m.title}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th style="width: 20%;">اليوم والتاريخ</th>
+                                    <td>${m.day}، ${m.date}</td>
+                                    <th style="width: 20%;">الوقت</th>
+                                    <td>${m.time || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>رئيس الاجتماع</th>
+                                    <td colspan="3">${creatorName}</td>
+                                </tr>
+                            </table>
+
+                            <div style="margin-bottom: 25px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">محضر ونقاط الاجتماع:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.minutes || 'لا توجد بيانات.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">التوصيات:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.recommendations || 'لا توجد توصيات.'}</div>
+                            </div>
+
+                            <div style="page-break-inside: avoid;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">سجل الحضور والغياب:</h5>
+                                <div style="display: flex; gap: 20px;">
+                                    <div style="flex: 1;">
+                                        <div style="background: #e8f5e9 !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #c8e6c9;">الحاضرون (${presentList.length})</div>
+                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
+                                            ${presentList.length > 0 ? presentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
+                                        </ul>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="background: #ffebee !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #ffcdd2;">الغائبون (${absentList.length})</div>
+                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
+                                            ${absentList.length > 0 ? absentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee; color: #d32f2f;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${evidenceHtml}
+
+                            <div style="margin-top: 60px; display: flex; justify-content: space-between; page-break-inside: avoid;">
+                                <div style="text-align: center; width: 45%;">
+                                    <strong>الاعتماد (رئيس الاجتماع)</strong>
+                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
+                                </div>
+                                <div style="text-align: center; width: 45%;">
+                                    <strong>اعتماد مدير المدرسة</strong>
+                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('print-area-container').innerHTML = content;
+                    document.body.classList.add('printing-notification');
+                    window.print();
+                    document.body.classList.remove('printing-notification');
                 }
             },
 
@@ -1871,761 +2564,6 @@
                 }
             },
 
-            utils: {
-                generatePassword: function() { return Math.random().toString(36).slice(-8); },
-                showAlert: function(msg) {
-                    document.getElementById('customAlertBody').innerText = msg;
-                    const modalEl = document.getElementById('customAlertModal');
-                    let alertModal = bootstrap.Modal.getInstance(modalEl);
-                    if (!alertModal) alertModal = new bootstrap.Modal(modalEl);
-                    alertModal.show();
-                },
-                sendWhatsapp: function(mobile, teacherId, msg, missingItemsStr) { 
-                    if(!mobile) return; 
-                    const today = new Date(); 
-                    System.data.notifications.push({ id: Date.now(), teacherId: parseInt(teacherId), type: 'whatsapp_alert', date: today.toISOString().split('T')[0], day: '-', details: msg, missing: missingItemsStr }); 
-                    System.save(); 
-                    System.ui.updateNotificationCount(); 
-                    window.open(`https://wa.me/${mobile}?text=${encodeURIComponent(msg)}`, '_blank'); 
-                },
-                printAllNotifications: function() { if(System.data.notifications.length === 0) return System.utils.showAlert('لا توجد إشعارات'); let html = `<div style="direction: rtl; text-align: right; padding: 20px;"><h2 style="text-align: center;">سجل الإشعارات</h2><table style="width: 100%; border-collapse: collapse; border: 1px solid #000;"><thead><tr style="background: #f0f0f0;"><th style="border: 1px solid #000; padding: 8px;">التاريخ</th><th style="border: 1px solid #000; padding: 8px;">المعلم</th><th style="border: 1px solid #000; padding: 8px;">التفاصيل</th></tr></thead><tbody>`; [...System.data.notifications].reverse().forEach(n => { const t = System.data.users.find(u => u.id === n.teacherId)?.name || 'غير معروف'; const fullText = n.details + (n.missing ? `<br><small><b>النواقص:</b> ${n.missing}</small>` : ''); html += `<tr><td style="border: 1px solid #000; padding: 8px;">${n.date}</td><td style="border: 1px solid #000; padding: 8px;">${t}</td><td style="border: 1px solid #000; padding: 8px;">${fullText}</td></tr>`; }); html += `</tbody></table></div>`; document.getElementById('print-area-container').innerHTML = html; document.body.classList.add('printing-notification'); window.print(); document.body.classList.remove('printing-notification'); },
-                getSubjectName: function(id) { return System.data.subjects.find(s=>s.id == id)?.name || ''; },
-                populateSchools: function(selectId) {
-                    const sel = document.getElementById(selectId);
-                    if(!sel) return;
-                    sel.innerHTML = '<option value="all">كل المدارس</option>';
-                    System.data.schools.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
-                },
-                fileToBase64Compressed: function(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
-                    return new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = event => {
-                            const img = new Image();
-                            img.src = event.target.result;
-                            img.onload = () => {
-                                const canvas = document.createElement('canvas');
-                                let width = img.width;
-                                let height = img.height;
-
-                                if (width > height) {
-                                    if (width > maxWidth) {
-                                        height = Math.round((height *= maxWidth / width));
-                                        width = maxWidth;
-                                    }
-                                } else {
-                                    if (height > maxHeight) {
-                                        width = Math.round((width *= maxHeight / height));
-                                        height = maxHeight;
-                                    }
-                                }
-                                canvas.width = width;
-                                canvas.height = height;
-                                const ctx = canvas.getContext('2d');
-                                ctx.drawImage(img, 0, 0, width, height);
-                                resolve(canvas.toDataURL('image/jpeg', quality));
-                            };
-                            img.onerror = error => reject(error);
-                        };
-                        reader.onerror = error => reject(error);
-                    });
-                }
-            },
-
-            notifications: {
-                init: function() {
-                    System.utils.populateSchools('notif-filter-school');
-                    this.updateStages();
-                    this.render();
-                },
-                updateStages: function() {
-                    const sel = document.getElementById('notif-filter-stage');
-                    if(!sel) return;
-                    sel.innerHTML = '<option value="all">كل المراحل</option>';
-                    const schoolIdStr = document.getElementById('notif-filter-school').value;
-                    const targetSchoolId = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdStr !== 'all' && schoolIdStr ? parseInt(schoolIdStr) : System.currentUser.schoolId;
-
-                    if (targetSchoolId) {
-                        const school = System.data.schools.find(s => s.id === targetSchoolId);
-                        if(school && school.stages) school.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
-                    } else if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                        System.data.schools.forEach(s => s.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
-                    }
-                },
-                render: function() { 
-                    const list = document.getElementById('notif-list'); 
-                    list.innerHTML = ''; 
-                    
-                    const filterName = document.getElementById('notif-filter-name').value.toLowerCase();
-                    const filterStage = document.getElementById('notif-filter-stage').value;
-                    const filterSchool = document.getElementById('notif-filter-school').value;
-
-                    let filtered = [...System.data.notifications].reverse().filter(n => {
-                        const t = System.data.users.find(u => u.id === n.teacherId);
-                        if(!t) return false;
-
-                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
-                        if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && t.schoolId !== System.currentUser.schoolId) return false;
-
-                        if(filterName && !t.name.toLowerCase().includes(filterName)) return false;
-
-                        if(filterStage && filterStage !== 'all') {
-                            let stageFound = false;
-                            const teacherAssigns = System.data.assignments.filter(a => a.teacherId === t.id);
-                            for(let a of teacherAssigns) {
-                                 let clsStageId = null;
-                                 System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                     if(c.id === a.classId) clsStageId = st.id;
-                                 }))));
-                                 if(clsStageId == filterStage) { stageFound = true; break; }
-                            }
-                            if(!stageFound) return false;
-                        }
-                        return true;
-                    }); 
-                    
-                    document.getElementById('notif-count-display').innerText = filtered.length;
-
-                    if(filtered.length === 0) {
-                        list.innerHTML = '<li class="list-group-item text-center text-muted">لا توجد نتائج مطابقة للبحث</li>';
-                        return;
-                    }
-
-                    filtered.forEach(n => { 
-                        const t = System.data.users.find(u => u.id === n.teacherId)?.name || 'غير معروف'; 
-                        const fullMessage = n.details + (n.missing ? `<br><span class="text-danger small"><strong>النواقص:</strong> ${n.missing}</span>` : ''); 
-                        list.innerHTML += `<li class="list-group-item d-block">
-                            <div class="d-flex justify-content-between">
-                                <strong>${t}</strong>
-                                <div>
-                                    <small class="text-muted ms-2">${n.date}</small>
-                                    <i class="fas fa-trash text-danger cursor-pointer" title="حذف" onclick="System.notifications.delete(${n.id})"></i>
-                                </div>
-                            </div>
-                            <div class="mt-2" style="white-space: pre-wrap;">${fullMessage}</div>
-                        </li>`; 
-                    }); 
-                },
-                delete: function(id) {
-                    if(confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
-                        System.data.notifications = System.data.notifications.filter(n => n.id !== id);
-                        System.save();
-                        this.render();
-                    }
-                }
-            },
-            
-            procedures: { 
-                init: function() { 
-                    System.utils.populateSchools('proc-filter-school');
-                    const tSel = document.getElementById('proc-teacher'); tSel.innerHTML = ''; 
-                    const userSchool = System.currentUser.schoolId;
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) || t.schoolId === userSchool) {
-                            tSel.innerHTML += `<option value="${t.id}">${t.name}</option>`
-                        }
-                    }); 
-                    this.renderList(); 
-                }, 
-                add: async function() { 
-                    const tid = parseInt(document.getElementById('proc-teacher').value); 
-                    const type = document.getElementById('proc-type').value; 
-                    const date = document.getElementById('proc-date').value; 
-                    const situation = document.getElementById('proc-situation').value; 
-                    const action = document.getElementById('proc-action').value; 
-                    const fileInput = document.getElementById('proc-image');
-                    
-                    if(!tid || !date || !situation) return System.utils.showAlert("الرجاء إكمال البيانات الأساسية");
-
-                    let imageUrl = null;
-                    if(fileInput.files && fileInput.files[0]) {
-                        const file = fileInput.files[0];
-                        if(file.size > 2000000) return System.utils.showAlert('حجم الصورة كبير جداً. الرجاء اختيار صورة أقل من 2 ميجا.');
-                        try {
-                            imageUrl = await System.utils.fileToBase64Compressed(file);
-                        } catch(e) {
-                            return System.utils.showAlert('حدث خطأ أثناء معالجة الصورة.');
-                        }
-                    }
-
-                    System.data.procedures.push({
-                        id: Date.now(), 
-                        teacherId: tid, 
-                        type, 
-                        date, 
-                        situation, 
-                        action,
-                        image: imageUrl
-                    }); 
-                    
-                    System.save(); 
-                    System.utils.showAlert('تم الحفظ بنجاح'); 
-                    document.getElementById('proc-situation').value = '';
-                    document.getElementById('proc-action').value = '';
-                    fileInput.value = '';
-                    this.renderList(); 
-                }, 
-                renderList: function() { 
-                    const tbody = document.querySelector('#procedures-table tbody'); 
-                    tbody.innerHTML = ''; 
-                    const user = System.currentUser;
-                    const filterSchool = document.getElementById('proc-filter-school').value;
-                    
-                    System.data.procedures.forEach(p => { 
-                        const t = System.data.users.find(u => u.id === p.teacherId);
-                        if(!t) return;
-
-                        if (['admin', 'supervisor', 'manager'].includes(user.role) && filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                        if (!['admin', 'supervisor', 'manager'].includes(user.role) && t.schoolId !== user.schoolId) return;
-                        
-                        if (user.role === 'coordinator') {
-                             const teacherAssigns = System.data.assignments.filter(a => a.teacherId === t.id);
-                             let inScope = false;
-                             for(let a of teacherAssigns) {
-                                 const gid = System.dashboard.getGradeId(a.classId);
-                                 if (user.scope?.gradeIds?.includes(gid)) { inScope = true; break; }
-                             }
-                             if(!inScope) return; 
-                        }
-                        
-                        let tools = '';
-                        if(user.role === 'admin' || user.role === 'manager' || user.role === 'coordinator') {
-                            tools = `
-                            <i class="fas fa-edit text-warning cursor-pointer mx-1" onclick="System.procedures.edit(${p.id})"></i>
-                            <i class="fas fa-trash text-danger cursor-pointer mx-1" onclick="System.procedures.delete(${p.id})"></i>
-                            `;
-                        }
-
-                        let typeBadge = '';
-                        switch(p.type) {
-                            case 'praise': typeBadge = '<span class="badge bg-success">شكر وثناء</span>'; break;
-                            case 'note': typeBadge = '<span class="badge bg-info text-dark">ملاحظة</span>'; break;
-                            case 'verbal_warning': typeBadge = '<span class="badge bg-secondary">تنبيه شفهي</span>'; break;
-                            case 'written_warning': typeBadge = '<span class="badge bg-dark">تنبيه كتابي</span>'; break;
-                            case 'violation': typeBadge = '<span class="badge bg-danger">مخالفة</span>'; break;
-                        }
-
-                        let attachBtn = p.image ? `<button class="btn btn-sm btn-outline-primary" onclick="System.procedures.showImage('${p.id}')"><i class="fas fa-image"></i> عرض</button>` : '<span class="text-muted small">-</span>';
-
-                        tbody.innerHTML += `<tr><td>${t.name}</td><td>${typeBadge}</td><td>${p.date}</td><td>${p.situation}</td><td>${p.action}</td><td>${attachBtn}</td><td>${tools}</td></tr>`; 
-                    }); 
-                },
-                showImage: function(id) {
-                    const p = System.data.procedures.find(x => x.id == id);
-                    if(p && p.image) {
-                        document.getElementById('preview-image-elem').src = p.image;
-                        document.getElementById('download-image-btn').href = p.image;
-                        new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
-                    }
-                },
-                delete: function(id) { if(confirm('حذف هذا الإجراء؟')) { System.data.procedures = System.data.procedures.filter(p => p.id !== id); System.save(); System.teacherFile.render(); System.procedures.renderList(); } },
-                edit: function(id) { const p = System.data.procedures.find(x => x.id === id); if(!p) return; const newSit = prompt('تعديل الموقف:', p.situation); const newAct = prompt('تعديل الإجراء:', p.action); if(newSit && newAct) { p.situation = newSit; p.action = newAct; System.save(); System.teacherFile.render(); System.procedures.renderList(); } }
-            },
-
-            tasks: {
-                initAssign: function() {
-                    System.utils.populateSchools('task-assign-school');
-                    document.getElementById('task-assign-date').valueAsDate = new Date();
-                    this.updateAssignTeachers();
-                    this.renderAssignList();
-                },
-                updateAssignTeachers: function() {
-                    const sel = document.getElementById('task-assign-teacher');
-                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
-                    const filterSchool = document.getElementById('task-assign-school').value;
-                    const user = System.currentUser;
-
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
-                    });
-                },
-                add: function() {
-                    const teacherId = parseInt(document.getElementById('task-assign-teacher').value);
-                    const date = document.getElementById('task-assign-date').value;
-                    const title = document.getElementById('task-assign-title').value.trim();
-                    const details = document.getElementById('task-assign-details').value.trim();
-
-                    if(!teacherId || !date || !title) return System.utils.showAlert('الرجاء إكمال البيانات الأساسية (المعلم، التاريخ، العنوان).');
-
-                    const newTask = {
-                        id: Date.now(),
-                        assignedTo: teacherId,
-                        assignedBy: System.currentUser.id,
-                        assignerName: System.currentUser.name,
-                        date: date,
-                        title: title,
-                        details: details,
-                        status: 'pending', 
-                        executionNotes: ''
-                    };
-
-                    System.data.tasks.push(newTask);
-                    System.save();
-                    System.utils.showAlert('تم إسناد التكليف بنجاح.');
-                    
-                    document.getElementById('task-assign-title').value = '';
-                    document.getElementById('task-assign-details').value = '';
-                    this.renderAssignList();
-                },
-                renderAssignList: function() {
-                    const tbody = document.querySelector('#tasks-assign-table tbody');
-                    tbody.innerHTML = '';
-                    const myTasks = System.data.tasks.filter(t => t.assignedBy === System.currentUser.id).reverse().slice(0, 10);
-                    
-                    if(myTasks.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لم تقم بإسناد أي تكليفات بعد.</td></tr>';
-                        return;
-                    }
-
-                    myTasks.forEach(t => {
-                        const teacher = System.data.users.find(u => u.id === t.assignedTo)?.name || 'غير معروف';
-                        let statusBadge = '<span class="badge bg-secondary">قيد الانتظار</span>';
-                        if(t.status === 'done') statusBadge = '<span class="badge bg-success">تم التنفيذ</span>';
-                        if(t.status === 'not_done') statusBadge = '<span class="badge bg-danger">لم يتم التنفيذ</span>';
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-primary cursor-pointer" onclick="System.tasks.printTask(${t.id})"><u>${t.title}</u></td>
-                            <td>${teacher}</td>
-                            <td>${t.date}</td>
-                            <td>${statusBadge}</td>
-                            <td><button class="btn btn-sm btn-danger" onclick="System.tasks.deleteTask(${t.id})"><i class="fas fa-trash"></i></button></td>
-                        </tr>`;
-                    });
-                },
-                deleteTask: function(id) {
-                    if(confirm('هل أنت متأكد من إلغاء وحذف هذا التكليف؟')) {
-                        System.data.tasks = System.data.tasks.filter(t => t.id !== id);
-                        System.save();
-                        this.renderAssignList();
-                    }
-                },
-                initList: function() {
-                    System.utils.populateSchools('task-list-school');
-                    this.updateListFilters();
-                },
-                updateListFilters: function() {
-                    const sel = document.getElementById('task-list-teacher');
-                    sel.innerHTML = '<option value="all">كل المعلمين</option>';
-                    const filterSchool = document.getElementById('task-list-school').value;
-                    const user = System.currentUser;
-
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
-                    });
-                    this.renderList();
-                },
-                renderList: function() {
-                    const tbody = document.querySelector('#tasks-list-table tbody');
-                    tbody.innerHTML = '';
-                    
-                    const filterSchool = document.getElementById('task-list-school').value;
-                    const filterTeacher = document.getElementById('task-list-teacher').value;
-                    const filterStatus = document.getElementById('task-list-status').value;
-                    const user = System.currentUser;
-
-                    let filtered = [...System.data.tasks].reverse().filter(task => {
-                        const t = System.data.users.find(u => u.id === task.assignedTo);
-                        if(!t) return false;
-
-                        if (['admin', 'supervisor', 'manager'].includes(user.role) && filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
-                        if (!['admin', 'supervisor', 'manager'].includes(user.role) && t.schoolId !== user.schoolId) return false;
-                        if (filterTeacher !== 'all' && t.id != filterTeacher) return false;
-                        if (filterStatus !== 'all' && task.status !== filterStatus) return false;
-
-                        // Coordinator scope check
-                        if(user.role === 'coordinator') {
-                            const teacherAssigns = System.data.assignments.filter(a => a.teacherId === t.id);
-                            let inScope = false;
-                            for(let a of teacherAssigns) {
-                                const gid = System.dashboard.getGradeId(a.classId);
-                                if (user.scope?.gradeIds?.includes(gid)) { inScope = true; break; }
-                            }
-                            if(!inScope) return false;
-                        }
-
-                        return true;
-                    });
-
-                    if(filtered.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-muted">لا توجد تكليفات مطابقة للبحث</td></tr>';
-                        return;
-                    }
-
-                    filtered.forEach(task => {
-                        const teacherName = System.data.users.find(u => u.id === task.assignedTo)?.name || 'غير معروف';
-                        
-                        let statusText = '<span class="text-secondary fw-bold"><i class="fas fa-clock ms-1"></i>قيد الانتظار</span>';
-                        if(task.status === 'done') statusText = '<span class="text-success fw-bold"><i class="fas fa-check-circle ms-1"></i>تم التنفيذ</span>';
-                        if(task.status === 'not_done') statusText = '<span class="text-danger fw-bold"><i class="fas fa-times-circle ms-1"></i>لم يتم التنفيذ</span>';
-
-                        const allowUpdate = (user.role === 'admin' || user.id === task.assignedBy || user.role === 'coordinator' || user.role === 'supervisor');
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-primary cursor-pointer" onclick="System.tasks.printTask(${task.id})"><u>${task.title}</u></td>
-                            <td class="fw-bold">${teacherName}</td>
-                            <td>${task.assignerName}</td>
-                            <td>${task.date}</td>
-                            <td>${statusText}</td>
-                            <td class="small text-start" style="white-space: pre-wrap; max-width: 250px;">${task.executionNotes || '-'}</td>
-                            <td>
-                                ${allowUpdate ? `<button class="btn btn-sm btn-outline-info fw-bold" onclick="System.tasks.openStatusModal(${task.id})"><i class="fas fa-edit ms-1"></i>تحديث الحالة</button>` : '-'}
-                            </td>
-                        </tr>`;
-                    });
-                },
-                openStatusModal: function(id) {
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(!task) return;
-                    document.getElementById('task-status-id').value = id;
-                    document.getElementById('task-status-select').value = task.status === 'pending' ? 'done' : task.status;
-                    document.getElementById('task-status-notes').value = task.executionNotes || '';
-                    new bootstrap.Modal(document.getElementById('taskStatusModal')).show();
-                },
-                saveStatus: function() {
-                    const id = parseInt(document.getElementById('task-status-id').value);
-                    const status = document.getElementById('task-status-select').value;
-                    const notes = document.getElementById('task-status-notes').value.trim();
-
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(task) {
-                        task.status = status;
-                        task.executionNotes = notes;
-                        System.save();
-                        System.utils.showAlert('تم تحديث حالة التكليف بنجاح.');
-                        bootstrap.Modal.getInstance(document.getElementById('taskStatusModal')).hide();
-                        this.renderList();
-                    }
-                },
-                printTask: function(id) {
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(!task) return;
-                    const teacher = System.data.users.find(u => u.id === task.assignedTo);
-                    const tName = teacher ? teacher.name : 'غير معروف';
-                    
-                    let statusHtml = '<span class="text-secondary fw-bold">قيد الانتظار</span>';
-                    if(task.status === 'done') statusHtml = '<span class="text-success fw-bold">تم التنفيذ</span>';
-                    if(task.status === 'not_done') statusHtml = '<span class="text-danger fw-bold">لم يتم التنفيذ</span>';
-
-                    const content = `
-                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
-                            <div style="border-bottom: 2px solid #0d6efd; padding-bottom: 15px; margin-bottom: 20px;">
-                                <h2 style="color: #0d6efd; margin: 0; font-weight: bold;">تفاصيل التكليف</h2>
-                                <small class="text-muted mt-2 d-block">تاريخ الإصدار: ${task.date}</small>
-                            </div>
-                            <div style="margin-bottom: 25px;">
-                                <h4 style="margin-bottom: 10px; font-weight: bold;">${task.title}</h4>
-                                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; white-space: pre-wrap; line-height: 1.6;">${task.details}</div>
-                            </div>
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold; width: 25%;">المعلم المكلَّف</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;">${tName}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold;">المكلِّف (المُصدر)</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;">${task.assignerName}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold;">حالة التنفيذ</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;">${statusHtml}</td>
-                                </tr>
-                                ${task.status !== 'pending' ? `
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold;">ملاحظات التنفيذ</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; white-space: pre-wrap;">${task.executionNotes || '-'}</td>
-                                </tr>` : ''}
-                            </table>
-                            <div style="margin-top: 50px; display: flex; justify-content: space-between;">
-                                <div style="text-align: center;">
-                                    <strong>توقيع المعلم</strong>
-                                    <div style="margin-top: 20px; border-bottom: 1px solid #000; width: 150px;"></div>
-                                </div>
-                                <div style="text-align: center;">
-                                    <strong>توقيع الإدارة / المكلِّف</strong>
-                                    <div style="margin-top: 20px; border-bottom: 1px solid #000; width: 150px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('task-print-content').innerHTML = content;
-                    new bootstrap.Modal(document.getElementById('taskPrintModal')).show();
-                },
-                executePrint: function() {
-                    const content = document.getElementById('task-print-content').innerHTML;
-                    document.getElementById('print-area-container').innerHTML = content;
-                    document.body.classList.add('printing-notification');
-                    window.print();
-                    document.body.classList.remove('printing-notification');
-                }
-            },
-
-            meetings: {
-                init: function() {
-                    const dateInput = document.getElementById('meet-date');
-                    dateInput.valueAsDate = new Date();
-                    this.updateDayName(dateInput.value);
-                    dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
-
-                    this.renderMembersSelect();
-                    this.renderList();
-                },
-                updateDayName: function(dateStr) {
-                    if(!dateStr) return;
-                    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                    const d = new Date(dateStr);
-                    document.getElementById('meet-day').value = days[d.getDay()];
-                },
-                renderMembersSelect: function() {
-                    const container = document.getElementById('meet-members-container');
-                    container.innerHTML = '';
-                    const user = System.currentUser;
-                    
-                    let teachers = System.data.users.filter(u => u.role === 'teacher');
-                    // Filter based on user role (Admin sees all, others see their school)
-                    if (!['admin', 'supervisor', 'manager'].includes(user.role)) {
-                        teachers = teachers.filter(t => t.schoolId === user.schoolId);
-                    }
-
-                    if(teachers.length === 0) {
-                        container.innerHTML = '<span class="text-muted">لا يوجد معلمين مسجلين.</span>';
-                        return;
-                    }
-
-                    teachers.forEach(t => {
-                        container.innerHTML += `
-                            <div class="form-check border p-2 rounded bg-white">
-                                <input class="form-check-input meet-member-check" type="checkbox" value="${t.id}" id="meet_mem_${t.id}">
-                                <label class="form-check-label cursor-pointer" for="meet_mem_${t.id}">${t.name}</label>
-                            </div>
-                        `;
-                    });
-                },
-                selectAllMembers: function() {
-                    const checks = document.querySelectorAll('.meet-member-check');
-                    let allChecked = true;
-                    checks.forEach(c => { if(!c.checked) allChecked = false; });
-                    checks.forEach(c => c.checked = !allChecked);
-                },
-                add: function() {
-                    const title = document.getElementById('meet-title').value.trim();
-                    const date = document.getElementById('meet-date').value;
-                    const day = document.getElementById('meet-day').value;
-                    const minutes = document.getElementById('meet-minutes').value.trim();
-                    const recommendations = document.getElementById('meet-recommendations').value.trim();
-                    
-                    const selectedMembers = [];
-                    document.querySelectorAll('.meet-member-check:checked').forEach(cb => {
-                        selectedMembers.push({ teacherId: parseInt(cb.value), present: true }); // Default to present
-                    });
-
-                    if(!title || !date || selectedMembers.length === 0) {
-                        return System.utils.showAlert('الرجاء كتابة عنوان الاجتماع وتحديد التاريخ واختيار عضو واحد على الأقل.');
-                    }
-
-                    const newMeeting = {
-                        id: Date.now(),
-                        creatorId: System.currentUser.id,
-                        schoolId: System.currentUser.schoolId,
-                        title: title,
-                        date: date,
-                        day: day,
-                        minutes: minutes,
-                        recommendations: recommendations,
-                        members: selectedMembers
-                    };
-
-                    System.data.meetings.push(newMeeting);
-                    System.save();
-                    System.utils.showAlert('تم حفظ الاجتماع بنجاح.');
-                    
-                    // Reset Form
-                    document.getElementById('meet-title').value = '';
-                    document.getElementById('meet-minutes').value = '';
-                    document.getElementById('meet-recommendations').value = '';
-                    document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
-                    
-                    this.renderList();
-                },
-                renderList: function() {
-                    const tbody = document.querySelector('#meetings-table tbody');
-                    tbody.innerHTML = '';
-                    const user = System.currentUser;
-
-                    let myMeetings = [...System.data.meetings].reverse();
-                    if(!['admin', 'supervisor', 'manager'].includes(user.role)) {
-                        myMeetings = myMeetings.filter(m => m.schoolId === user.schoolId);
-                    }
-
-                    if(myMeetings.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد اجتماعات مهنية مسجلة.</td></tr>';
-                        return;
-                    }
-
-                    myMeetings.forEach(m => {
-                        const membersCount = m.members.length;
-                        const presentCount = m.members.filter(mem => mem.present).length;
-                        const percentage = membersCount > 0 ? Math.round((presentCount / membersCount) * 100) : 0;
-                        const allowEdit = user.role === 'admin' || m.creatorId === user.id;
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-success cursor-pointer" onclick="System.meetings.openDetails(${m.id})"><u>${m.title}</u></td>
-                            <td>${m.date} (${m.day})</td>
-                            <td>${membersCount}</td>
-                            <td><span class="badge bg-${percentage >= 80 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}">${percentage}%</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info text-white" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
-                                ${allowEdit ? `<button class="btn btn-sm btn-danger ms-1" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
-                            </td>
-                        </tr>`;
-                    });
-                },
-                openDetails: function(id) {
-                    const m = System.data.meetings.find(x => x.id === id);
-                    if(!m) return;
-                    
-                    document.getElementById('manage-meet-id').value = m.id;
-                    document.getElementById('manage-meet-title').innerText = m.title;
-                    document.getElementById('manage-meet-date').innerText = `${m.date} (${m.day})`;
-                    document.getElementById('manage-meet-minutes').innerText = m.minutes || 'لا يوجد محضر مسجل.';
-                    document.getElementById('manage-meet-rec').innerText = m.recommendations || 'لا توجد توصيات.';
-
-                    const attTbody = document.querySelector('#meet-attendance-table tbody');
-                    attTbody.innerHTML = '';
-                    
-                    m.members.forEach(mem => {
-                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
-                        const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
-                        const text = mem.present ? 'حاضر' : 'غائب';
-                        const icon = mem.present ? 'fa-check' : 'fa-times';
-                        
-                        attTbody.innerHTML += `<tr>
-                            <td class="fw-bold">${tName}</td>
-                            <td>
-                                <span class="badge ${badgeClass} fs-6 attendance-toggle" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
-                                    <i class="fas ${icon} ms-1"></i>${text}
-                                </span>
-                            </td>
-                        </tr>`;
-                    });
-
-                    new bootstrap.Modal(document.getElementById('meetingDetailsModal')).show();
-                },
-                toggleAttendance: function(meetId, teacherId) {
-                    const m = System.data.meetings.find(x => x.id === meetId);
-                    if(!m) return;
-                    
-                    // Only allow toggling if admin or creator
-                    if(System.currentUser.role !== 'admin' && m.creatorId !== System.currentUser.id) {
-                        return System.utils.showAlert('لا تملك صلاحية تعديل الحضور لهذا الاجتماع.');
-                    }
-
-                    const mem = m.members.find(x => x.teacherId === teacherId);
-                    if(mem) {
-                        mem.present = !mem.present;
-                        System.save();
-                        this.openDetails(meetId); // Refresh modal view
-                        this.renderList(); // Refresh background table
-                    }
-                },
-                deleteMeeting: function(id) {
-                    if(confirm('هل أنت متأكد من حذف هذا الاجتماع نهائياً؟')) {
-                        System.data.meetings = System.data.meetings.filter(m => m.id !== id);
-                        System.save();
-                        this.renderList();
-                    }
-                },
-                printMeeting: function() {
-                    const id = parseInt(document.getElementById('manage-meet-id').value);
-                    const m = System.data.meetings.find(x => x.id === id);
-                    if(!m) return;
-
-                    let presentList = [];
-                    let absentList = [];
-                    m.members.forEach(mem => {
-                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'غير معروف';
-                        if(mem.present) presentList.push(tName);
-                        else absentList.push(tName);
-                    });
-
-                    const creatorName = System.data.users.find(u => u.id === m.creatorId)?.name || 'الإدارة';
-
-                    const content = `
-                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
-                            <div style="text-align: center; border-bottom: 2px solid #198754; padding-bottom: 15px; margin-bottom: 25px;">
-                                <h2 style="color: #198754; margin: 0; font-weight: bold;">محضر اجتماع تنمية مهنية</h2>
-                            </div>
-                            
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold; width: 20%;">عنوان الاجتماع</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;" colspan="3"><strong>${m.title}</strong></td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold; width: 20%;">اليوم والتاريخ</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;">${m.day}، ${m.date}</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6; background: #f8f9fa; font-weight: bold; width: 20%;">رئيس الاجتماع</td>
-                                    <td style="padding: 10px; border: 1px solid #dee2e6;">${creatorName}</td>
-                                </tr>
-                            </table>
-
-                            <div style="margin-bottom: 25px;">
-                                <h5 style="color: #198754; border-bottom: 1px solid #ccc; padding-bottom: 5px;">محضر ونقاط الاجتماع:</h5>
-                                <div style="white-space: pre-wrap; line-height: 1.8; font-size: 14px; text-align: justify;">${m.minutes || 'لا توجد بيانات.'}</div>
-                            </div>
-
-                            <div style="margin-bottom: 25px;">
-                                <h5 style="color: #198754; border-bottom: 1px solid #ccc; padding-bottom: 5px;">التوصيات:</h5>
-                                <div style="white-space: pre-wrap; line-height: 1.8; font-size: 14px; text-align: justify;">${m.recommendations || 'لا توجد توصيات.'}</div>
-                            </div>
-
-                            <div style="page-break-inside: avoid;">
-                                <h5 style="color: #198754; border-bottom: 1px solid #ccc; padding-bottom: 5px;">سجل الحضور والغياب:</h5>
-                                <div style="display: flex; gap: 20px;">
-                                    <div style="flex: 1;">
-                                        <div style="background: #e8f5e9; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #c8e6c9;">الحاضرون (${presentList.length})</div>
-                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
-                                            ${presentList.length > 0 ? presentList.map(n => `<li style="padding: 8px; border-bottom: 1px solid #eee;">${n}</li>`).join('') : '<li style="padding: 8px; text-align: center; color: #666;">لا يوجد</li>'}
-                                        </ul>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="background: #ffebee; padding: 5px; text-align: center; font-weight: bold; border: 1px solid #ffcdd2;">الغائبون (${absentList.length})</div>
-                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
-                                            ${absentList.length > 0 ? absentList.map(n => `<li style="padding: 8px; border-bottom: 1px solid #eee; color: #d32f2f;">${n}</li>`).join('') : '<li style="padding: 8px; text-align: center; color: #666;">لا يوجد</li>'}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div style="margin-top: 50px; display: flex; justify-content: space-between; page-break-inside: avoid;">
-                                <div style="text-align: center; width: 45%;">
-                                    <strong>الاعتماد (رئيس الاجتماع)</strong>
-                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
-                                </div>
-                                <div style="text-align: center; width: 45%;">
-                                    <strong>اعتماد مدير المدرسة</strong>
-                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    document.getElementById('print-area-container').innerHTML = content;
-                    document.body.classList.add('printing-notification');
-                    window.print();
-                    document.body.classList.remove('printing-notification');
-                }
-            },
-
             visits: {
                 initEntry: function() {
                     System.utils.populateSchools('visit-school');
@@ -3076,7 +3014,6 @@
                     html += `</div>`;
                     container.innerHTML = html;
                     
-                    // إعداد قسم الإضافة اليدوية
                     manualSection.classList.remove('hidden');
                     const tObj = System.data.users.find(u => u.id === teacherId);
                     const sId = tObj ? tObj.schoolId : null;
@@ -3135,7 +3072,6 @@
 
                     const rowContainer = document.getElementById('dynamic-classes-row');
                     
-                    // إزالة تنبيه "لا توجد فصول" إن وُجد
                     const alertDiv = rowContainer.querySelector('.alert-warning');
                     if(alertDiv) alertDiv.parentElement.remove();
 
@@ -3438,9 +3374,8 @@
                                 let total = 0, count = 0;
                                 vals.forEach(v => { if(v !== null) { total += v; count++; } });
                                 const avg = count > 0 ? Math.round(total / count) : '-';
-
                                 resTbody.innerHTML += `<tr>
-                                    <td class="fw-bold bg-light">${className}</td>
+                                    <td class="fw-bold">${className}</td>
                                     <td>${vals[0]!==null ? vals[0]+'%' : '-'}</td>
                                     <td>${vals[1]!==null ? vals[1]+'%' : '-'}</td>
                                     <td class="fw-bold">${vals[2]!==null ? vals[2]+'%' : '-'}</td>
@@ -3460,301 +3395,350 @@
                     document.getElementById('tf-verbal-count').innerText = verbal.length; 
                     document.getElementById('tf-written-count').innerText = written.length; 
                     document.getElementById('tf-violation-count').innerText = violations.length; 
-                    document.getElementById('tf-gaps-count').innerText = gapVisitsCount;
-
-                    this.fillProcTable('table-praise', praise, t.mobile, t.id);
-                    this.fillProcTable('table-notes', notes, t.mobile, t.id);
-                    this.fillProcTable('table-verbal', verbal, t.mobile, t.id);
-                    this.fillProcTable('table-written', written, t.mobile, t.id);
-                    this.fillProcTable('table-violations', violations, t.mobile, t.id);
-                },
-                fillProcTable: function(tableId, data, mobile, teacherId) {
-                    const tbody = document.querySelector(`#${tableId} tbody`);
-                    tbody.innerHTML = '';
-                    const isAdmin = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role);
-                    const teacherName = System.data.users.find(u => u.id === teacherId)?.name || '';
-
-                    data.forEach(p => {
-                        const message = `المكرم المعلم المحترم / ${teacherName}\nنود إحاطتكم أنه تم اتخاذ إجراء مع الموقف : ${p.situation}\nوكان الإجراء كالتالي : ${p.action}\n، مع العلم أن هذه الرسالة الكترونية من نظام متابعة المعلمين تلقائيا`;
-                        
-                        let tools = `<i class="fab fa-whatsapp text-success cursor-pointer fa-lg" onclick="System.utils.sendWhatsapp('${mobile}', '${teacherId}', \`${message}\`, '')"></i>`;
-                        
-                        if(p.image) {
-                            tools += ` <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2" onclick="System.procedures.showImage('${p.id}')" title="عرض الصورة المرفقة"><i class="fas fa-image"></i></button>`;
-                        }
-                        
-                        if(isAdmin) {
-                            tools += ` <i class="fas fa-edit text-warning cursor-pointer ms-2" onclick="System.procedures.edit(${p.id})"></i>`;
-                            tools += ` <i class="fas fa-trash text-danger cursor-pointer ms-2" onclick="System.procedures.delete(${p.id})"></i>`;
-                        }
-                        tbody.innerHTML += `<tr><td>${p.date}</td><td>${p.situation}</td><td>${p.action}</td><td>${tools}</td></tr>`;
-                    });
+                    document.getElementById('tf-gaps-count').innerText = gapVisitsCount; 
+                    
+                    const fillTable = (id, data, hasImage) => { 
+                        const tbody = document.querySelector(`#${id} tbody`); tbody.innerHTML = ''; 
+                        data.forEach(item => { 
+                            const imgHtml = hasImage && item.image ? `<img src="${item.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${item.image}')">` : '-';
+                            tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.situation}</td><td>${item.action}</td><td>${imgHtml}</td></tr>`; 
+                        }); 
+                        if(data.length===0) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">لا يوجد سجل</td></tr>`; 
+                    }; 
+                    
+                    fillTable('table-praise', praise, true); 
+                    fillTable('table-notes', notes, true); 
+                    fillTable('table-verbal', verbal, true); 
+                    fillTable('table-written', written, true); 
+                    fillTable('table-violations', violations, true);
                 }
             },
 
-            reports: { 
-                init: function() { 
-                    const wSel = document.getElementById('rep-week'); 
-                    wSel.innerHTML = '<option value="all">كل الأسابيع</option>'; 
-                    System.data.weeks.forEach(w => wSel.innerHTML += `<option value="${w.id}">${w.name}</option>`); 
-                    
+            reports: {
+                init: function() {
                     System.utils.populateSchools('rep-school');
-                    System.utils.populateSchools('rank-stage-school');
+                    System.utils.populateSchools('rank-school');
                     System.utils.populateSchools('res-rank-school');
-                    
+                    System.utils.populateSchools('rank-stage-school');
                     this.updateStages();
-                    this.updateRankFilters('init');
+                    this.updateRankFilters('school');
                     this.updateResRankStages();
-
-                    const role = System.currentUser.role;
-                    const resRankTab = document.getElementById('nav-item-res-rank');
-                    if(resRankTab) {
-                        if (role === 'admin' || role === 'supervisor') {
-                            resRankTab.style.display = 'block';
-                        } else {
-                            resRankTab.style.display = 'none';
-                        }
+                    
+                    const wSel = document.getElementById('rep-week');
+                    const rwSel = document.getElementById('rank-week');
+                    const rswSel = document.getElementById('rank-stage-week');
+                    wSel.innerHTML = '<option value="all">كل الأسابيع</option>';
+                    rwSel.innerHTML = '<option value="all">كل الأسابيع</option>';
+                    rswSel.innerHTML = '<option value="all">الجميع</option>';
+                    System.data.weeks.forEach(w => {
+                        wSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                        rwSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                        rswSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
+                    });
+                    
+                    if(System.currentUser.role === 'admin' || System.currentUser.role === 'supervisor') {
+                        document.getElementById('nav-item-res-rank').style.display = 'block';
                     }
-
-                    this.generate(); 
-                    this.renderStagesRank();
-                    this.renderTeachersRank();
-                    this.renderTeachersResultsRank();
-                }, 
+                },
                 updateStages: function() {
-                    const sSel = document.getElementById('rep-stage');
-                    sSel.innerHTML = '<option value="all">كل المراحل</option>';
-                    const schoolIdStr = document.getElementById('rep-school').value;
-                    const targetSchoolId = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdStr !== 'all' && schoolIdStr ? parseInt(schoolIdStr) : System.currentUser.schoolId;
-
-                    if(targetSchoolId) {
-                        const school = System.data.schools.find(s => s.id === targetSchoolId);
-                        if(school && school.stages) school.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
-                    } else if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                        System.data.schools.forEach(s => s.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
-                    }
-                },
-                generate: function() { 
-                    const schoolIdFilter = document.getElementById('rep-school').value;
-                    const weekIdFilter = document.getElementById('rep-week').value; 
-                    const stageIdFilter = document.getElementById('rep-stage').value;
-                    const isCoord = System.currentUser.role === 'coordinator'; 
-                    const userSchoolId = System.currentUser.schoolId; 
-                    const allowedGrades = System.currentUser.scope?.gradeIds || []; 
-                    
-                    let filteredEvals = System.data.evaluations.filter(e => { 
-                        const teacher = System.data.users.find(u => u.id === e.teacherId); 
-                        if(!teacher) return false; 
-                        
-                        if(isCoord) { 
-                            if(teacher.schoolId !== userSchoolId) return false; 
-                            const gid = System.dashboard.getGradeId(e.classId); 
-                            if(!allowedGrades.includes(gid)) return false; 
-                        } 
-                        
-                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdFilter !== 'all' && schoolIdFilter && teacher.schoolId != schoolIdFilter) return false;
-                        if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && teacher.schoolId !== userSchoolId) return false;
-
-                        if(weekIdFilter !== 'all' && e.weekId != weekIdFilter) return false; 
-                        
-                        if(stageIdFilter !== 'all') {
-                             let clsStageId = null;
-                             System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                 if(c.id === e.classId) clsStageId = st.id;
-                             }))));
-                             if(clsStageId != stageIdFilter) return false;
-                        }
-
-                        return true; 
-                    }); 
-                    
-                    const criteriaStats = {}; System.data.criteria.forEach(c => criteriaStats[c.name] = 0); 
-                    filteredEvals.forEach(e => { const cName = System.data.criteria.find(c => c.id === e.criteriaId)?.name; if(cName) criteriaStats[cName]++; }); 
-                    
-                    this.renderPieChart(criteriaStats); 
-                    this.renderBarChart(filteredEvals); 
-                    this.renderCoordinatorChart(filteredEvals);
-                    this.renderPerformanceTable(filteredEvals); 
-                    this.renderDetailedTable(filteredEvals); 
-                },
-                renderStagesRank: function() {
-                    const weekFilter = document.getElementById('rank-stage-week').value;
-                    const schoolFilter = document.getElementById('rank-stage-school')?.value || 'all';
-
-                    const stageStats = {}; 
-                    
-                    System.data.evaluations.forEach(e => {
-                         if (weekFilter !== 'all' && e.weekId != weekFilter) return;
-
-                         let stageId = null;
-                         let stageName = '';
-                         let schoolIdMatch = null;
-                         System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                             if(c.id === e.classId) {
-                                 stageId = st.id;
-                                 stageName = st.name; 
-                                 schoolIdMatch = s.id;
-                             }
-                         }))));
-                         
-                         if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolFilter !== 'all' && schoolIdMatch != schoolFilter) return;
-                         if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdMatch !== System.currentUser.schoolId) return;
-
-                         if(stageId) {
-                             if(!stageStats[stageId]) stageStats[stageId] = { name: stageName, active: 0, visits: new Set() };
-                             stageStats[stageId].active++;
-                             stageStats[stageId].visits.add(e.weekId + '_' + e.classId + '_' + e.teacherId);
-                         }
-                    });
-
-                    const ranking = [];
-                    Object.keys(stageStats).forEach(sid => {
-                        const data = stageStats[sid];
-                        const totalCriteria = System.data.criteria.length;
-                        const totalPossible = data.visits.size * totalCriteria;
-                        const percentage = totalPossible > 0 ? (data.active / totalPossible) * 100 : 0;
-                        ranking.push({ name: data.name, active: data.active, total: totalPossible, pct: percentage });
-                    });
-
-                    ranking.sort((a,b) => b.pct - a.pct);
-
-                    const tbody = document.querySelector('#table-stages-rank tbody');
-                    tbody.innerHTML = '';
-                    ranking.forEach((r, idx) => {
-                        tbody.innerHTML += `<tr>
-                            <td>${idx + 1}</td>
-                            <td>${r.name}</td>
-                            <td>${r.total}</td>
-                            <td>${r.active}</td>
-                            <td><span class="badge bg-${r.pct > 80 ? 'success' : 'warning'}">${Math.round(r.pct)}%</span></td>
-                        </tr>`;
+                    const sel = document.getElementById('rep-stage');
+                    sel.innerHTML = '<option value="all">الكل</option>';
+                    const sid = document.getElementById('rep-school').value;
+                    System.data.schools.forEach(s => {
+                        if (sid !== 'all' && sid && s.id != sid) return;
+                        s.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`);
                     });
                 },
                 updateRankFilters: function(level) {
-                    const sSchool = document.getElementById('rank-school');
-                    const sSel = document.getElementById('rank-stage');
-                    const gSel = document.getElementById('rank-grade');
-                    const cSel = document.getElementById('rank-class');
-                    const wSel = document.getElementById('rank-week');
-                    const swSel = document.getElementById('rank-stage-week');
+                    const schoolSel = document.getElementById('rank-school');
+                    const stageSel = document.getElementById('rank-stage');
+                    const gradeSel = document.getElementById('rank-grade');
+                    const classSel = document.getElementById('rank-class');
 
-                    if(level === 'init') {
-                        System.utils.populateSchools('rank-school');
-                         wSel.innerHTML = '<option value="all">كل الأسابيع</option>';
-                         if(swSel) swSel.innerHTML = '<option value="all">الجميع</option>';
-                         
-                         System.data.weeks.forEach(w => {
-                             wSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
-                             if(swSel) swSel.innerHTML += `<option value="${w.id}">${w.name}</option>`;
-                         });
+                    if (level === 'school') {
+                        stageSel.innerHTML = '<option value="all">كل المراحل</option>';
+                        const sid = schoolSel.value;
+                        System.data.schools.forEach(s => {
+                            if (sid !== 'all' && sid && s.id != sid) return;
+                            s.stages.forEach(st => stageSel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`);
+                        });
                     }
-                    
-                    if(level === 'init' || level === 'school') {
-                         sSel.innerHTML = '<option value="all">كل المراحل</option>';
-                         const schId = sSchool ? sSchool.value : 'all';
-                         System.data.schools.forEach(s => {
-                             if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schId !== 'all' && schId && s.id != schId) return;
-                             if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && s.id !== System.currentUser.schoolId) return;
-                             s.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
-                         });
+                    if (level === 'school' || level === 'stage') {
+                        gradeSel.innerHTML = '<option value="all">كل الصفوف</option>';
+                        const sid = schoolSel.value;
+                        const stid = stageSel.value;
+                        System.data.schools.forEach(s => {
+                            if (sid !== 'all' && sid && s.id != sid) return;
+                            s.stages.forEach(st => {
+                                if (stid !== 'all' && stid && st.id != stid) return;
+                                st.grades.forEach(g => gradeSel.innerHTML += `<option value="${g.id}">${g.name}</option>`);
+                            });
+                        });
                     }
-                    
-                    if(level === 'stage' || level === 'school' || level === 'init') {
-                         gSel.innerHTML = '<option value="all">كل الصفوف</option>';
-                         const sid = sSel.value;
-                         const schId = sSchool ? sSchool.value : 'all';
-                         System.data.schools.forEach(s => {
-                             if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schId !== 'all' && schId && s.id != schId) return;
-                             if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && s.id !== System.currentUser.schoolId) return;
-                             s.stages.forEach(st => {
-                                 if(sid !== 'all' && st.id != sid) return;
-                                 st.grades.forEach(g => gSel.innerHTML += `<option value="${g.id}">${g.name}</option>`);
-                             });
-                         });
+                    if (level === 'school' || level === 'stage' || level === 'grade') {
+                        classSel.innerHTML = '<option value="all">كل الفصول</option>';
+                        const gid = gradeSel.value;
+                        System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => {
+                            if (gid !== 'all' && gid && g.id != gid) return;
+                            g.classes.forEach(c => classSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+                        })));
                     }
-
-                    if(level === 'grade' || level === 'stage' || level === 'school' || level === 'init') {
-                         cSel.innerHTML = '<option value="all">كل الفصول</option>';
-                         const gid = gSel.value;
-                         const schId = sSchool ? sSchool.value : 'all';
-                         System.data.schools.forEach(s => {
-                             if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schId !== 'all' && schId && s.id != schId) return;
-                             if (!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && s.id !== System.currentUser.schoolId) return;
-                             s.stages.forEach(st => st.grades.forEach(g => {
-                                 if(gid !== 'all' && g.id != gid) return;
-                                 g.classes.forEach(c => cSel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-                             }));
-                         });
-                    }
-                },
-                renderTeachersRank: function() {
-                    const filterSchool = document.getElementById('rank-school')?.value || 'all';
-                    const filterStage = document.getElementById('rank-stage').value;
-                    const filterGrade = document.getElementById('rank-grade').value;
-                    const filterClass = document.getElementById('rank-class').value;
-                    const filterWeek = document.getElementById('rank-week').value;
-
-                    const teacherStats = {};
-
-                    System.data.evaluations.forEach(e => {
-                        const t = System.data.users.find(u => u.id === e.teacherId);
-                        if(!t) return;
-                        
-                        if(['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && filterSchool !== 'all' && t.schoolId != filterSchool) return;
-                        if(!['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && t.schoolId !== System.currentUser.schoolId) return;
-
-                        if(filterWeek !== 'all' && e.weekId != filterWeek) return;
-                        if(filterClass !== 'all' && e.classId != filterClass) return;
-                        
-                        let matchesHierarchy = true;
-                        if(filterStage !== 'all' || filterGrade !== 'all') {
-                             System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                 if(c.id === e.classId) {
-                                     if(filterStage !== 'all' && st.id != filterStage) matchesHierarchy = false;
-                                     if(filterGrade !== 'all' && g.id != filterGrade) matchesHierarchy = false;
-                                 }
-                             }))));
-                        }
-                        if(!matchesHierarchy) return;
-
-                        if(!teacherStats[e.teacherId]) teacherStats[e.teacherId] = { active: 0, visits: new Set() };
-                        teacherStats[e.teacherId].active++;
-                        teacherStats[e.teacherId].visits.add(e.weekId + '_' + e.classId);
-                    });
-
-                    const ranking = [];
-                    Object.keys(teacherStats).forEach(tid => {
-                        const t = System.data.users.find(u => u.id == tid);
-                        if(t) {
-                            const data = teacherStats[tid];
-                            const totalPossible = data.visits.size * System.data.criteria.length;
-                            const pct = totalPossible > 0 ? (data.active / totalPossible) * 100 : 0;
-                            const assign = System.data.assignments.find(a => a.teacherId == tid);
-                            const sub = assign ? System.utils.getSubjectName(assign.subjectId) : '-';
-
-                            ranking.push({ name: t.name, subject: sub, visits: data.visits.size, pct: pct });
-                        }
-                    });
-
-                    ranking.sort((a,b) => b.pct - a.pct);
-
-                    const tbody = document.querySelector('#table-teachers-rank tbody');
-                    tbody.innerHTML = '';
-                    ranking.forEach((r, idx) => {
-                         tbody.innerHTML += `<tr>
-                            <td>${idx + 1}</td>
-                            <td>${r.name}</td>
-                            <td>${r.subject}</td>
-                            <td>${r.visits}</td>
-                            <td><span class="fw-bold ${r.pct < 50 ? 'text-danger' : 'text-success'}">${Math.round(r.pct)}%</span></td>
-                        </tr>`;
-                    });
                 },
                 updateResRankStages: function() {
-                    const sSel = document.getElementById('res-rank-stage');
-                    if(!sSel) return;
+                    const sel = document.getElementById('res-rank-stage');
+                    sel.innerHTML = '<option value="all">كل المراحل</option>';
+                    const sid = document.getElementById('res-rank-school').value;
+                    System.data.schools.forEach(s => {
+                        if (sid !== 'all' && sid && s.id != sid) return;
+                        s.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`);
+                    });
+                },
+                generate: function() {
+                    const schoolId = document.getElementById('rep-school').value;
+                    const stageId = document.getElementById('rep-stage').value;
+                    const weekId = document.getElementById('rep-week').value;
+                    
+                    const tbodyData = document.querySelector('#detailed-data-table tbody');
+                    const tbodyPerf = document.querySelector('#report-table tbody');
+                    tbodyData.innerHTML = ''; tbodyPerf.innerHTML = '';
+
+                    const validTeacherIds = System.data.users.filter(u => u.role === 'teacher' && (schoolId === 'all' || u.schoolId == schoolId)).map(u => u.id);
+                    
+                    const evals = System.data.evaluations.filter(e => {
+                        if(weekId !== 'all' && e.weekId != weekId) return false;
+                        if(!validTeacherIds.includes(e.teacherId)) return false;
+                        if(stageId !== 'all') {
+                            let inStage = false;
+                            System.data.schools.forEach(s => s.stages.forEach(st => {
+                                if(st.id == stageId) st.grades.forEach(g => { if(g.classes.find(c => c.id === e.classId)) inStage = true; });
+                            }));
+                            if(!inStage) return false;
+                        }
+                        return true;
+                    });
+
+                    // Perf Table
+                    const tStats = {};
+                    evals.forEach(e => {
+                        if(!tStats[e.teacherId]) tStats[e.teacherId] = { active: new Set(), totalClasses: new Set() };
+                        tStats[e.teacherId].active.add(`${e.weekId}_${e.classId}_${e.criteriaId}`);
+                        tStats[e.teacherId].totalClasses.add(`${e.weekId}_${e.classId}`);
+                    });
+
+                    Object.keys(tStats).forEach(tid => {
+                        const t = System.data.users.find(u => u.id == tid);
+                        if(t) {
+                            const clsCount = tStats[tid].totalClasses.size;
+                            const maxPossible = clsCount * System.data.criteria.length;
+                            const actual = tStats[tid].active.size;
+                            const percent = maxPossible > 0 ? Math.round((actual / maxPossible) * 100) : 0;
+                            const subName = System.data.subjects.find(s => s.id === t.subjectId)?.name || '-';
+                            tbodyPerf.innerHTML += `<tr><td>${t.name}</td><td>${subName}</td><td>${clsCount}</td><td>${actual} من ${maxPossible}</td><td>${percent}%</td></tr>`;
+                        }
+                    });
+
+                    // Data Table
+                    evals.forEach(e => {
+                        const t = System.data.users.find(u => u.id === e.teacherId);
+                        const c = System.data.criteria.find(cr => cr.id === e.criteriaId);
+                        const subName = System.data.subjects.find(s => s.id === (t ? t.subjectId : null))?.name || '-';
+                        let className = '';
+                        System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(cl => { if(cl.id === e.classId) className = `${g.name} - ${cl.name}`; }))));
+                        
+                        tbodyData.innerHTML += `<tr><td>${e.date}</td><td>${t ? t.name : '-'}</td><td>${subName}</td><td>${className}</td><td class="text-success">${c ? c.name : '-'}</td><td>-</td></tr>`;
+                    });
+                },
+                renderStagesRank: function() {
+                    const tbody = document.querySelector('#table-stages-rank tbody');
+                    tbody.innerHTML = '';
+                    const weekId = document.getElementById('rank-stage-week').value;
+                    const schoolIdStr = document.getElementById('rank-stage-school').value;
+                    const userRole = System.currentUser.role;
+                    
+                    let stagesStats = [];
+
+                    System.data.schools.forEach(school => {
+                        if (['admin', 'supervisor', 'manager'].includes(userRole) && schoolIdStr !== 'all' && schoolIdStr && school.id != schoolIdStr) return;
+                        if (!['admin', 'supervisor', 'manager'].includes(userRole) && school.id !== System.currentUser.schoolId) return;
+
+                        school.stages.forEach(stage => {
+                            let expected = 0;
+                            let actual = 0;
+                            
+                            const stageClasses = [];
+                            stage.grades.forEach(g => g.classes.forEach(c => stageClasses.push(c.id)));
+
+                            const relevantAssignments = System.data.assignments.filter(a => stageClasses.includes(a.classId));
+                            
+                            relevantAssignments.forEach(a => {
+                                const relevantWeeks = weekId === 'all' ? System.data.weeks.map(w => w.id) : [parseInt(weekId)];
+                                expected += relevantWeeks.length * System.data.criteria.length;
+                                
+                                relevantWeeks.forEach(w => {
+                                    actual += System.data.evaluations.filter(e => e.weekId === w && e.classId === a.classId && e.teacherId === a.teacherId).length;
+                                });
+                            });
+
+                            if(expected > 0) {
+                                const percent = Math.round((actual / expected) * 100);
+                                stagesStats.push({ name: `${school.name} - ${stage.name}`, expected, actual, percent });
+                            }
+                        });
+                    });
+
+                    stagesStats.sort((a,b) => b.percent - a.percent);
+                    stagesStats.forEach((st, idx) => {
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold">${idx + 1}</td>
+                            <td>${st.name}</td>
+                            <td>${st.expected}</td>
+                            <td>${st.actual}</td>
+                            <td class="fw-bold text-${st.percent < 50 ? 'danger' : (st.percent < 80 ? 'warning' : 'success')}">${st.percent}%</td>
+                        </tr>`;
+                    });
+                    if(stagesStats.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد بيانات لهذه المرحلة</td></tr>';
+                },
+                renderTeachersRank: function() {
+                    const tbody = document.querySelector('#table-teachers-rank tbody');
+                    tbody.innerHTML = '';
+                    
+                    const schoolId = document.getElementById('rank-school').value;
+                    const stageId = document.getElementById('rank-stage').value;
+                    const gradeId = document.getElementById('rank-grade').value;
+                    const classId = document.getElementById('rank-class').value;
+                    const weekId = document.getElementById('rank-week').value;
+
+                    const validTeacherIds = System.data.users.filter(u => u.role === 'teacher' && (schoolId === 'all' || u.schoolId == schoolId)).map(u => u.id);
+                    
+                    let teacherStats = [];
+
+                    validTeacherIds.forEach(tid => {
+                        const t = System.data.users.find(u => u.id === tid);
+                        const assignments = System.data.assignments.filter(a => a.teacherId === tid);
+                        
+                        let expected = 0;
+                        let actual = 0;
+                        let visitedClasses = 0;
+
+                        assignments.forEach(a => {
+                            let matchStage = false, matchGrade = false, matchClass = false;
+                            System.data.schools.forEach(s => s.stages.forEach(st => {
+                                if(st.grades.find(g => g.classes.find(c => c.id === a.classId))) {
+                                    if(stageId === 'all' || stageId == st.id) matchStage = true;
+                                }
+                                st.grades.forEach(g => {
+                                    if(g.classes.find(c => c.id === a.classId)) {
+                                        if(gradeId === 'all' || gradeId == g.id) matchGrade = true;
+                                    }
+                                });
+                            }));
+                            if(classId === 'all' || classId == a.classId) matchClass = true;
+
+                            if(matchStage && matchGrade && matchClass) {
+                                const relevantWeeks = weekId === 'all' ? System.data.weeks.map(w => w.id) : [parseInt(weekId)];
+                                expected += relevantWeeks.length * System.data.criteria.length;
+                                relevantWeeks.forEach(w => {
+                                    const count = System.data.evaluations.filter(e => e.weekId === w && e.classId === a.classId && e.teacherId === a.teacherId).length;
+                                    actual += count;
+                                    if(count > 0) visitedClasses++;
+                                });
+                            }
+                        });
+
+                        if(expected > 0) {
+                            const percent = Math.round((actual / expected) * 100);
+                            const subName = System.data.subjects.find(s => s.id === t.subjectId)?.name || '-';
+                            teacherStats.push({ name: t.name, subName, visitedClasses, percent });
+                        }
+                    });
+
+                    teacherStats.sort((a,b) => b.percent - a.percent);
+                    teacherStats.forEach((st, idx) => {
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold">${idx + 1}</td>
+                            <td>${st.name}</td>
+                            <td>${st.subName}</td>
+                            <td>${st.visitedClasses}</td>
+                            <td class="fw-bold text-${st.percent < 50 ? 'danger' : (st.percent < 80 ? 'warning' : 'success')}">${st.percent}%</td>
+                        </tr>`;
+                    });
+                    
+                    if(teacherStats.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد بيانات بناءً على الفلاتر المحددة</td></tr>';
+                },
+                renderTeachersResultsRank: function() {
+                    const tbody = document.querySelector('#table-teachers-results-rank tbody');
+                    tbody.innerHTML = '';
+                    const filterSchool = document.getElementById('res-rank-school').value;
+                    const filterStage = document.getElementById('res-rank-stage').value;
+                    const currentUser = System.currentUser;
+
+                    if(currentUser.role !== 'admin' && currentUser.role !== 'supervisor') {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-danger">لا تملك صلاحية عرض هذا التقرير</td></tr>';
+                        return;
+                    }
+
+                    let teachers = System.data.users.filter(u => u.role === 'teacher');
+                    teachers = teachers.filter(t => {
+                        if (filterSchool !== 'all' && t.schoolId != filterSchool) return false;
+                        return true;
+                    });
+
+                    const rankList = [];
+
+                    teachers.forEach(t => {
+                        const assignments = System.data.assignments.filter(a => a.teacherId === t.id);
+                        let totalPercents = 0;
+                        let countPercents = 0;
+
+                        assignments.forEach(a => {
+                            let clsStageId = null;
+                            System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
+                                if(c.id === a.classId) clsStageId = st.id;
+                            }))));
+
+                            if(filterStage !== 'all' && filterStage && clsStageId != filterStage) return;
+
+                            const res = System.data.teacherResults.filter(r => r.teacherId === t.id && r.classId === a.classId);
+                            res.forEach(r => { totalPercents += r.percentage; countPercents++; });
+                        });
+
+                        if(countPercents > 0) {
+                            const avg = Math.round(totalPercents / countPercents);
+                            const schoolName = System.data.schools.find(s=>s.id === t.schoolId)?.name || '-';
+                            const subName = System.data.subjects.find(s=>s.id === t.subjectId)?.name || '-';
+                            rankList.push({ name: t.name, schoolName, subName, avg });
+                        }
+                    });
+
+                    rankList.sort((a,b) => b.avg - a.avg);
+
+                    if(rankList.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد نتائج مسجلة تطابق الفلتر</td></tr>';
+                        return;
+                    }
+
+                    rankList.forEach((r, idx) => {
+                        const color = r.avg < 60 ? 'danger' : (r.avg < 85 ? 'warning' : 'success');
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold">${idx + 1}</td>
+                            <td class="fw-bold">${r.name}</td>
+                            <td>${r.schoolName}</td>
+                            <td>${r.subName}</td>
+                            <td class="fw-bold fs-5 text-${color}">${r.avg}%</td>
+                        </tr>`;
+                    });
+                }
+            },
+            
+            notifications: {
+                init: function() {
+                    System.utils.populateSchools('notif-filter-school');
+                    this.updateStages();
+                },
+                updateStages: function() {
+                    const sSel = document.getElementById('notif-filter-stage');
                     sSel.innerHTML = '<option value="all">كل المراحل</option>';
-                    const schoolIdStr = document.getElementById('res-rank-school').value;
+                    const schoolIdStr = document.getElementById('notif-filter-school').value;
                     const targetSchoolId = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdStr !== 'all' && schoolIdStr ? parseInt(schoolIdStr) : System.currentUser.schoolId;
 
                     if (targetSchoolId) {
@@ -3763,109 +3747,148 @@
                     } else if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
                         System.data.schools.forEach(s => s.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
                     }
+                    this.render();
                 },
-                renderTeachersResultsRank: function() {
-                    const filterSchool = document.getElementById('res-rank-school')?.value || 'all';
-                    const filterStage = document.getElementById('res-rank-stage').value;
-                    const currentUser = System.currentUser;
-
-                    const teacherStats = [];
-                    const teachers = System.data.users.filter(u => u.role === 'teacher');
+                render: function() {
+                    const ul = document.getElementById('notif-list');
+                    ul.innerHTML = '';
                     
-                    teachers.forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(currentUser.role) && filterSchool !== 'all' && t.schoolId != filterSchool) return;
-                        if (!['admin', 'supervisor', 'manager'].includes(currentUser.role) && t.schoolId !== currentUser.schoolId) return;
+                    const filterSchool = document.getElementById('notif-filter-school').value;
+                    const filterStage = document.getElementById('notif-filter-stage').value;
+                    const filterName = document.getElementById('notif-filter-name').value.toLowerCase();
+                    const user = System.currentUser;
 
-                        const assignments = System.data.assignments.filter(a => a.teacherId === t.id);
-                        if(assignments.length === 0) return;
-
-                        let hasValidStage = false;
-                        let totalPct = 0;
-                        let count = 0;
-
-                        assignments.forEach(a => {
-                            let clsStageId = null;
-                            System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                if(c.id === a.classId) clsStageId = st.id;
-                            }))));
-
-                            if(filterStage !== 'all' && clsStageId != filterStage) return;
-                            hasValidStage = true;
-
-                            const res = System.data.teacherResults.filter(r => r.teacherId === t.id && r.classId === a.classId);
-                            res.forEach(r => {
-                                totalPct += r.percentage;
-                                count++;
-                            });
-                        });
-
-                        if(filterStage !== 'all' && !hasValidStage) return;
-
-                        const avg = count > 0 ? Math.round(totalPct / count) : 0;
+                    const filteredNotifs = [...System.data.notifications].reverse().filter(n => {
+                        const t = System.data.users.find(u => u.id === n.teacherId);
+                        if (!t) return false;
+                        if(user.role === 'teacher' && t.id !== user.id) return false;
                         
-                        if (count > 0 || hasValidStage) {
-                             const schoolName = System.data.schools.find(s => s.id === t.schoolId)?.name || '-';
-                             const subName = System.utils.getSubjectName(t.subjectId) || '-';
-                             teacherStats.push({ name: t.name, school: schoolName, subject: subName, avg: avg, count: count });
+                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
+                            if (filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
+                        } else if (user.role !== 'teacher' && t.schoolId !== user.schoolId) {
+                            return false;
                         }
+                        if(filterName && !t.name.toLowerCase().includes(filterName)) return false;
+
+                        if (filterStage !== 'all') {
+                            let match = false;
+                            const assigns = System.data.assignments.filter(a => a.teacherId === t.id);
+                            for(let a of assigns) {
+                                System.data.schools.forEach(s => s.stages.forEach(st => {
+                                    if(st.id == filterStage && st.grades.find(g => g.classes.find(c => c.id === a.classId))) match = true;
+                                }));
+                            }
+                            if(!match) return false;
+                        }
+                        return true;
                     });
 
-                    teacherStats.sort((a, b) => b.avg - a.avg);
-
-                    const tbody = document.querySelector('#table-teachers-results-rank tbody');
-                    tbody.innerHTML = '';
+                    document.getElementById('notif-count-display').innerText = filteredNotifs.length;
                     
-                    if(teacherStats.length === 0) {
-                         tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد بيانات متاحة</td></tr>';
-                         return;
+                    if(filteredNotifs.length === 0) {
+                        ul.innerHTML = '<li class="list-group-item text-muted">لا يوجد إشعارات.</li>';
+                        return;
+                    }
+                    
+                    filteredNotifs.forEach(n => {
+                        const t = System.data.users.find(u => u.id === n.teacherId);
+                        const tName = t ? t.name : 'مستخدم محذوف';
+                        ul.innerHTML += `<li class="list-group-item border-start border-4 border-success mb-2">
+                            <div class="d-flex justify-content-between">
+                                <strong class="text-primary">${tName}</strong>
+                                <span class="badge bg-light text-dark">${n.date}</span>
+                            </div>
+                            <p class="mt-2 mb-1">${n.details}</p>
+                            ${n.missing ? `<small class="text-danger fw-bold">النواقص: ${n.missing}</small>` : ''}
+                        </li>`;
+                    });
+                }
+            },
+
+            procedures: {
+                init: function() {
+                    const tSel = document.getElementById('proc-teacher');
+                    tSel.innerHTML = '<option value="">اختر المعلم</option>';
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
+                            tSel.innerHTML += `<option value="${t.id}">${t.name} - ${System.data.schools.find(s=>s.id===t.schoolId)?.name||''}</option>`;
+                        } else if (t.schoolId === System.currentUser.schoolId) {
+                            tSel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        }
+                    });
+                    document.getElementById('proc-date').valueAsDate = new Date();
+                    System.utils.populateSchools('proc-filter-school');
+                    this.renderList();
+                },
+                add: async function() {
+                    const tid = parseInt(document.getElementById('proc-teacher').value);
+                    const type = document.getElementById('proc-type').value;
+                    const date = document.getElementById('proc-date').value;
+                    const situation = document.getElementById('proc-situation').value.trim();
+                    const action = document.getElementById('proc-action').value.trim();
+                    const imageInput = document.getElementById('proc-image');
+
+                    if(!tid || !date || !situation || !action) return System.utils.showAlert('الرجاء تعبئة البيانات الأساسية (المعلم، التاريخ، الموقف، الإجراء).');
+                    
+                    let imageBase64 = null;
+                    if(imageInput.files && imageInput.files[0]) {
+                        try {
+                            imageBase64 = await System.utils.fileToBase64Compressed(imageInput.files[0]);
+                        } catch(e) {
+                            return System.utils.showAlert("حدث خطأ أثناء معالجة الصورة.");
+                        }
                     }
 
-                    teacherStats.forEach((r, idx) => {
-                         let color = r.avg < 60 ? 'danger' : (r.avg < 85 ? 'warning' : 'success');
-                         if(r.count === 0) color = 'muted'; 
-                         tbody.innerHTML += `<tr>
-                            <td>${idx + 1}</td>
-                            <td>${r.name}</td>
-                            <td>${r.school}</td>
-                            <td>${r.subject}</td>
-                            <td class="fw-bold text-${color}">${r.count > 0 ? r.avg + '%' : 'لم تُرصد نتائج'}</td>
-                        </tr>`;
-                    });
+                    System.data.procedures.push({ id: Date.now(), teacherId: tid, type, date, situation, action, image: imageBase64 });
+                    System.save();
+                    
+                    document.getElementById('proc-situation').value = '';
+                    document.getElementById('proc-action').value = '';
+                    document.getElementById('proc-image').value = '';
+                    this.renderList();
                 },
-                renderPieChart: function(data) { const ctx = document.getElementById('chart-pie').getContext('2d'); if(System.charts.pie) System.charts.pie.destroy(); System.charts.pie = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#fd7e14'] }] } }); },
-                renderBarChart: function(evals) { 
-                    const scores = {}; evals.forEach(e => { if(!scores[e.teacherId]) scores[e.teacherId] = 0; scores[e.teacherId]++; }); 
-                    const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]).slice(0, 5); 
-                    const labels = sorted.map(i => System.data.users.find(u => u.id == i[0])?.name); 
-                    const values = sorted.map(i => i[1]); 
-                    const ctx = document.getElementById('chart-bar').getContext('2d'); 
-                    if(System.charts.bar) System.charts.bar.destroy(); 
-                    System.charts.bar = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'نقاط التفعيل', data: values, backgroundColor: '#0d6efd' }] } }); 
-                },
-                renderCoordinatorChart: function(evals) {
-                    const coordScores = {};
-                    evals.forEach(e => {
-                        const gradeId = System.dashboard.getGradeId(e.classId);
-                        const coord = System.data.users.find(u => u.role === 'coordinator' && u.scope?.gradeIds?.includes(gradeId));
-                        if(coord) {
-                            if(!coordScores[coord.id]) coordScores[coord.id] = 0;
-                            coordScores[coord.id]++;
+                renderList: function() {
+                    const tbody = document.querySelector('#procedures-table tbody');
+                    tbody.innerHTML = '';
+                    const types = { 'praise': 'شكر', 'note': 'ملاحظة', 'verbal_warning': 'تنبيه شفهي', 'written_warning': 'تنبيه كتابي', 'violation': 'مخالفة' };
+                    const filterSchool = document.getElementById('proc-filter-school').value;
+                    const user = System.currentUser;
+
+                    const filteredProcedures = [...System.data.procedures].reverse().filter(p => {
+                        const t = System.data.users.find(u => u.id === p.teacherId);
+                        if(!t) return false;
+                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
+                            if (filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
+                        } else if (t.schoolId !== user.schoolId) {
+                            return false;
                         }
+                        return true;
                     });
-                    const sorted = Object.entries(coordScores).sort((a,b) => b[1] - a[1]).slice(0, 5);
-                    const labels = sorted.map(i => System.data.users.find(u => u.id == i[0])?.name);
-                    const values = sorted.map(i => i[1]);
-                    const ctx = document.getElementById('chart-coordinator').getContext('2d');
-                    if(System.charts.coord) System.charts.coord.destroy();
-                    System.charts.coord = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'متابعات المنسقين', data: values, backgroundColor: '#198754' }] } });
+
+                    filteredProcedures.forEach(p => {
+                        const t = System.data.users.find(u => u.id === p.teacherId);
+                        const tName = t ? t.name : 'غير معروف';
+                        const imageHtml = p.image ? `<img src="${p.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${p.image}')">` : '-';
+                        tbody.innerHTML += `<tr><td>${tName}</td><td>${types[p.type]}</td><td>${p.date}</td><td>${p.situation}</td><td>${p.action}</td><td>${imageHtml}</td><td><button class="btn btn-sm btn-danger" onclick="System.procedures.delete(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
+                    });
                 },
-                renderPerformanceTable: function(evals) { const tbody = document.querySelector('#report-table tbody'); tbody.innerHTML = ''; const teacherStats = {}; evals.forEach(e => { if(!teacherStats[e.teacherId]) teacherStats[e.teacherId] = { count: 0, classes: new Set() }; teacherStats[e.teacherId].count++; teacherStats[e.teacherId].classes.add(e.classId + '_' + e.weekId); }); Object.keys(teacherStats).forEach(tid => { const t = System.data.users.find(u => u.id == tid); if(t) { const sub = System.data.subjects.find(s => s.id === t.subjectId)?.name || '-'; const totalCriteriaPossibility = teacherStats[tid].classes.size * System.data.criteria.length; const percent = totalCriteriaPossibility > 0 ? Math.round((teacherStats[tid].count / totalCriteriaPossibility) * 100) : 0; tbody.innerHTML += `<tr><td>${t.name}</td><td>${sub}</td><td>${teacherStats[tid].classes.size}</td><td>${teacherStats[tid].count}</td><td>${percent}%</td></tr>`; } }); },
-                renderDetailedTable: function(evals) { const tbody = document.querySelector('#detailed-data-table tbody'); tbody.innerHTML = ''; const visits = {}; evals.forEach(e => { const key = `${e.weekId}_${e.classId}_${e.teacherId}`; if(!visits[key]) { visits[key] = { date: e.date, teacherId: e.teacherId, classId: e.classId, weekId: e.weekId, criteriaIds: [] }; } visits[key].criteriaIds.push(e.criteriaId); }); Object.values(visits).forEach(v => { const t = System.data.users.find(u => u.id == v.teacherId)?.name; let className = ''; System.data.schools.forEach(s => s.stages.forEach(st => st.grades?.forEach(g => g.classes?.forEach(c => { if(c.id === v.classId) className = c.name; })))); const assign = System.data.assignments.find(a => a.teacherId == v.teacherId && a.classId == v.classId); const subName = assign ? System.utils.getSubjectName(assign.subjectId) : '-'; const activeNames = v.criteriaIds.map(cid => System.data.criteria.find(c => c.id === cid)?.name).filter(Boolean).join('، '); const allCriteriaIds = System.data.criteria.map(c => c.id); const missingIds = allCriteriaIds.filter(id => !v.criteriaIds.includes(id)); const missingNames = missingIds.map(id => System.data.criteria.find(c => c.id === id)?.name).filter(Boolean).join('، '); tbody.innerHTML += `<tr><td>${v.date}</td><td>${t}</td><td>${subName}</td><td>${className}</td><td class="text-success small">${activeNames}</td><td class="text-danger small">${missingNames}</td></tr>`; }); }
+                delete: function(id) {
+                    if(confirm('هل أنت متأكد من الحذف؟')) {
+                        System.data.procedures = System.data.procedures.filter(p => p.id !== id);
+                        System.save();
+                        this.renderList();
+                    }
+                },
+                previewImage: function(base64Data) {
+                    document.getElementById('preview-image-elem').src = base64Data;
+                    document.getElementById('download-image-btn').href = base64Data;
+                    new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                }
             }
         };
 
         window.System = System;
-        window.onload = function() { System.init(); };
+        document.addEventListener('DOMContentLoaded', () => System.init());
     </script>
 </body>
 </html>
