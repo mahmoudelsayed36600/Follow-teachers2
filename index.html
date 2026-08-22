@@ -7,6 +7,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة الرسوم البيانية -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -94,21 +95,22 @@
 
         body:not(.is-admin) .admin-only { display: none !important; }
 
+        /* --- Print Styles --- */
         @media print {
             @page { size: A4; margin: 10mm; }
+            body { background-color: white; font-size: 14pt !important; color: #000; }
             .sidebar, .no-print, #login-section, .btn, .modal, .nav-tabs { display: none !important; }
-            .main-content { margin-right: 0; padding: 0; width: 100%; background-color: white;}
-            .section-card { box-shadow: none; border: 0; page-break-inside: avoid; padding:0;}
-            body { background-color: white; font-size: 13pt; color: #000; }
-            body.printing-notification * { visibility: hidden; }
-            body.printing-notification #print-area-container, body.printing-notification #print-area-container * { visibility: visible; }
-            body.printing-notification #print-area-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            .main-content { margin-right: 0 !important; padding: 0 !important; width: 100% !important; background-color: white !important;}
+            .section-card { box-shadow: none !important; border: 0 !important; page-break-inside: avoid; padding: 0 !important;}
             
-            .print-header-wrapper { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
-            .print-header-logo { max-height: 90px; max-width: 120px; object-fit: contain; }
-            .print-header-text { text-align: center; color: #2c3e50; line-height: 1.4; }
+            /* Logic for specialized prints */
+            body.printing-special * { visibility: hidden; }
+            body.printing-special #print-area-container, body.printing-special #print-area-container * { visibility: visible; }
+            body.printing-special #print-area-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            
+            /* Print tables forcing borders and colors */
             .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .print-table th, .print-table td { border: 1px solid #dee2e6; padding: 12px; text-align: right; }
+            .print-table th, .print-table td { border: 1px solid #000 !important; padding: 12px; text-align: right; }
             .print-table th { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; color: #000; font-weight: bold; }
         }
     </style>
@@ -185,6 +187,7 @@
         </div>
     </div>
 
+    <!-- نافذة البنود الناقصة -->
     <div class="modal fade" id="missingItemsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -290,15 +293,16 @@
                 </div>
                 <div class="modal-footer no-print">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                    <button type="button" class="btn btn-success" onclick="System.meetings.printMeeting()"><i class="fas fa-print ms-2"></i>طباعة / حفظ PDF</button>
+                    <button type="button" class="btn btn-success" onclick="System.meetings.printMeeting()"><i class="fas fa-print ms-2"></i>طباعة التقرير</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- حاوية عامة للطباعة (تستخدم للتكليفات والاجتماعات والإشعارات) -->
+    <!-- حاوية عامة للطباعة المخصصة -->
     <div id="print-area-container" class="d-none"></div>
 
+    <!-- شاشة تسجيل الدخول -->
     <div id="login-section"> 
         <div class="login-card text-center">
             <div class="mb-4"><i class="fas fa-cloud-upload-alt fa-3x text-primary"></i></div>
@@ -315,6 +319,7 @@
         </div>
     </div>
 
+    <!-- القائمة الجانبية -->
     <div id="sidebar" class="sidebar hidden">
         <div class="user-info">
             <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 60px; height: 60px;">
@@ -337,15 +342,18 @@
         </div>
     </div>
 
+    <!-- المحتوى الرئيسي -->
     <div id="main-content" class="main-content hidden">
         <div class="d-flex justify-content-between align-items-center mb-3 no-print">
             <h4 class="text-secondary" id="page-header-title"></h4>
             <div>
                  <span class="badge bg-light text-dark border me-2"><i class="fas fa-user ms-1"></i> <span id="top-bar-user"></span></span>
-                <button onclick="window.print()" class="btn btn-secondary btn-sm"><i class="fas fa-print ms-2"></i>طباعة الشاشة</button>
+                <!-- تم تحديث زر الطباعة ليعمل بشكل سليم -->
+                <button onclick="System.utils.printScreen()" class="btn btn-secondary btn-sm"><i class="fas fa-print ms-2"></i>طباعة الشاشة</button>
             </div>
         </div>
 
+        <!-- صفحة الهيكل والإعدادات -->
         <div id="view-admin-structure" class="view-section hidden">
             <h3 class="mb-4 text-primary"><i class="fas fa-cogs ms-2"></i>الإعدادات والهيكل</h3>
             <div class="row">
@@ -916,6 +924,7 @@
             </div>
         </div>
 
+        <!-- قسم التقارير المحدث مع الرسوم البيانية -->
         <div id="view-reports" class="view-section hidden">
             <h3 class="mb-4 text-primary">التقارير</h3>
             <div class="section-card">
@@ -923,12 +932,12 @@
                     <div class="col-md-3 admin-only"><label class="small fw-bold">المدرسة</label><select id="rep-school" class="form-select form-select-sm" onchange="System.reports.updateStages()"></select></div>
                     <div class="col-md-3"><label class="small fw-bold">المرحلة</label><select id="rep-stage" class="form-select form-select-sm"><option value="all">الكل</option></select></div>
                     <div class="col-md-3"><label class="small fw-bold">الأسبوع</label><select id="rep-week" class="form-select form-select-sm"><option value="all">الكل</option></select></div>
-                    <div class="col-md-3 d-flex align-items-end"><button onclick="System.reports.generate()" class="btn btn-primary btn-sm w-100">عرض التقرير</button></div>
+                    <div class="col-md-3 d-flex align-items-end"><button onclick="System.reports.generate()" class="btn btn-primary btn-sm w-100">تحديث وعرض التقرير</button></div>
                 </div>
                 <ul class="nav nav-tabs mb-3 no-print" role="tablist">
                     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#stats" type="button">إحصائيات</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#perf" type="button">الأداء</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#data" type="button">بيانات</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#data" type="button">بيانات الرصد</button></li>
                     <li class="nav-item"><button class="nav-link fw-bold text-success" data-bs-toggle="tab" data-bs-target="#tab-stages-rank" type="button">ترتيب المراحل</button></li>
                     <li class="nav-item"><button class="nav-link fw-bold text-primary" data-bs-toggle="tab" data-bs-target="#tab-teachers-rank" type="button">ترتيب المعلمين</button></li>
                     <li class="nav-item admin-super-only" id="nav-item-res-rank" style="display: none;"><button class="nav-link fw-bold text-purple" data-bs-toggle="tab" data-bs-target="#tab-teachers-results-rank" type="button">ترتيب نتائج المعلمين</button></li>
@@ -936,17 +945,16 @@
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="stats" role="tabpanel">
                         <div class="row">
-                            <div class="col-md-4 mb-3"><div class="card p-2"><h6 class="text-center">الأداء العام</h6><canvas id="chart-pie"></canvas></div></div>
-                            <div class="col-md-4 mb-3"><div class="card p-2"><h6 class="text-center">أفضل المعلمين</h6><canvas id="chart-bar"></canvas></div></div>
-                            <div class="col-md-4 mb-3"><div class="card p-2"><h6 class="text-center">أفضل المنسقين</h6><canvas id="chart-coordinator"></canvas></div></div>
+                            <div class="col-md-6 mb-3"><div class="card p-3 shadow-sm border-0"><h6 class="text-center text-secondary mb-3">الأداء العام للبنود (مفعل / غير مفعل)</h6><canvas id="chart-pie" style="max-height: 300px;"></canvas></div></div>
+                            <div class="col-md-6 mb-3"><div class="card p-3 shadow-sm border-0"><h6 class="text-center text-secondary mb-3">أفضل 5 معلمين (نسبة التفعيل)</h6><canvas id="chart-bar" style="max-height: 300px;"></canvas></div></div>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="perf" role="tabpanel"><div class="table-responsive"><table class="table table-bordered table-striped" id="report-table"><thead class="table-light"><tr><th>المعلم</th><th>المادة</th><th>الحصص</th><th>البنود المفعلة</th><th>الإنجاز %</th></tr></thead><tbody></tbody></table></div></div>
+                    <div class="tab-pane fade" id="perf" role="tabpanel"><div class="table-responsive"><table class="table table-bordered table-striped" id="report-table"><thead class="table-light"><tr><th>المعلم</th><th>المادة</th><th>الحصص المرصودة</th><th>البنود المفعلة</th><th>الإنجاز %</th></tr></thead><tbody></tbody></table></div></div>
                     <div class="tab-pane fade" id="data" role="tabpanel"><div class="table-responsive"><table class="table table-bordered table-sm small" id="detailed-data-table"><thead class="table-dark"><tr><th>التاريخ</th><th>المعلم</th><th>المادة</th><th>الفصل</th><th>مفعل</th><th>غير مفعل</th></tr></thead><tbody></tbody></table></div></div>
                     
                     <div class="tab-pane fade" id="tab-stages-rank" role="tabpanel">
                         <div class="alert alert-success">ترتيب المراحل حسب نسبة تفعيل البنود</div>
-                        <div class="row g-2 mb-3 bg-light p-2 rounded border">
+                        <div class="row g-2 mb-3 bg-light p-2 rounded border no-print">
                             <div class="col-md-3 admin-only"><label class="small fw-bold">المدرسة:</label><select id="rank-stage-school" class="form-select form-select-sm" onchange="System.reports.renderStagesRank()"></select></div>
                             <div class="col-md-3"><label class="small fw-bold">الأسبوع:</label><select id="rank-stage-week" class="form-select form-select-sm"><option value="all">الجميع</option></select></div>
                             <div class="col-md-2 d-flex align-items-end"><button class="btn btn-success btn-sm w-100" onclick="System.reports.renderStagesRank()">تحديث</button></div>
@@ -961,7 +969,7 @@
 
                     <div class="tab-pane fade" id="tab-teachers-rank" role="tabpanel">
                         <div class="alert alert-primary">ترتيب المعلمين حسب الأداء</div>
-                        <div class="row g-2 mb-3 bg-light p-2 rounded border">
+                        <div class="row g-2 mb-3 bg-light p-2 rounded border no-print">
                              <div class="col-md-2 admin-only"><select id="rank-school" class="form-select form-select-sm" onchange="System.reports.updateRankFilters('school')"></select></div>
                              <div class="col-md-2"><select id="rank-stage" class="form-select form-select-sm" onchange="System.reports.updateRankFilters('stage')"><option value="all">كل المراحل</option></select></div>
                              <div class="col-md-2"><select id="rank-grade" class="form-select form-select-sm" onchange="System.reports.updateRankFilters('grade')"><option value="all">كل الصفوف</option></select></div>
@@ -1247,7 +1255,7 @@
                     const input = document.getElementById(`setting-${type}-logo`);
                     if(input.files && input.files[0]) {
                         try {
-                            const b64 = await System.utils.fileToBase64Compressed(input.files[0], 500, 500); // smaller max bounds for logo
+                            const b64 = await System.utils.fileToBase64Compressed(input.files[0], 500, 500); 
                             if(!System.data.settings) System.data.settings = {};
                             if(type === 'school') System.data.settings.schoolLogo = b64;
                             if(type === 'dept') System.data.settings.deptLogo = b64;
@@ -1307,15 +1315,17 @@
                     if(pwd === null) return;
                     if(pwd === System.currentUser.password) {
                         const adminUser = System.currentUser;
+                        const savedArchives = System.data.archives || []; // Preserve archives
                         System.data = {
                             users: [adminUser],
                             schools: [], subjects: [], weeks: [],
                             criteria: [{id: 'c1', name: 'تحضير الدروس'}, {id: 'c2', name: 'استخدام التقنية'}, {id: 'c3', name: 'الواجبات'}, {id: 'c4', name: 'المشاركة الصفية'}],
-                            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], archives: [], tasks: [], meetings: [],
+                            assignments: [], evaluations: [], procedures: [], notifications: [], visits: [], teacherResults: [], tasks: [], meetings: [],
+                            archives: savedArchives,
                             settings: System.data.settings
                         };
                         System.save();
-                        alert("تم مسح كافة البيانات وتفريغ المنصة بنجاح.");
+                        alert("تم مسح كافة البيانات وتفريغ المنصة بنجاح مع الاحتفاظ بالأرشيف.");
                         location.reload();
                     } else {
                         alert("كلمة المرور خاطئة. تم إلغاء العملية.");
@@ -1335,6 +1345,7 @@
                         snapshot: snapshot
                     };
                     
+                    if(!System.data.archives) System.data.archives = [];
                     System.data.archives.push(archiveObj);
                     System.save();
                     document.getElementById('archive-name').value = '';
@@ -1343,6 +1354,7 @@
                 },
                 renderArchive: function() {
                     const tbody = document.querySelector('#archive-table tbody');
+                    if(!tbody) return;
                     tbody.innerHTML = '';
                     if(!System.data.archives || System.data.archives.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4" class="text-muted">لا يوجد أرشيف مسجل حالياً.</td></tr>';
@@ -1404,20 +1416,23 @@
                     const sLogo = System.data.settings?.schoolLogo || '';
                     const dLogo = System.data.settings?.deptLogo || '';
                     return `
-                        <div class="print-header-wrapper">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #2c3e50; padding-bottom: 15px; margin-bottom: 25px; page-break-inside: avoid;">
                             <div style="width: 25%; text-align: right;">
-                                ${sLogo ? `<img src="${sLogo}" class="print-header-logo">` : ''}
+                                ${sLogo ? `<img src="${sLogo}" style="max-height: 90px; max-width: 120px; object-fit: contain;">` : ''}
                             </div>
-                            <div class="print-header-text" style="width: 50%;">
+                            <div style="width: 50%; text-align: center; color: #2c3e50; line-height: 1.4;">
                                 <h3 style="margin:0; font-weight:bold;">المملكة العربية السعودية</h3>
                                 <h4 style="margin:5px 0;">وزارة التعليم</h4>
                                 <h2 style="margin:15px 0; font-weight:bold; color:#0d6efd; text-decoration: underline;">${titleText}</h2>
                             </div>
                             <div style="width: 25%; text-align: left;">
-                                ${dLogo ? `<img src="${dLogo}" class="print-header-logo">` : ''}
+                                ${dLogo ? `<img src="${dLogo}" style="max-height: 90px; max-width: 120px; object-fit: contain;">` : ''}
                             </div>
                         </div>
                     `;
+                },
+                printScreen: function() {
+                    window.print();
                 },
                 printAllNotifications: function() { 
                     if(System.data.notifications.length === 0) return System.utils.showAlert('لا توجد إشعارات'); 
@@ -1431,9 +1446,9 @@
                     }); 
                     html += `</tbody></table></div>`; 
                     document.getElementById('print-area-container').innerHTML = html; 
-                    document.body.classList.add('printing-notification'); 
+                    document.body.classList.add('printing-special'); 
                     window.print(); 
-                    document.body.classList.remove('printing-notification'); 
+                    document.body.classList.remove('printing-special'); 
                 },
                 getSubjectName: function(id) { return System.data.subjects.find(s=>s.id == id)?.name || ''; },
                 populateSchools: function(selectId) {
@@ -1475,556 +1490,6 @@
                         };
                         reader.onerror = error => reject(error);
                     });
-                }
-            },
-
-            tasks: {
-                initAssign: function() {
-                    System.utils.populateSchools('task-assign-school');
-                    document.getElementById('task-assign-date').valueAsDate = new Date();
-                    this.updateAssignTeachers();
-                    this.renderAssignList();
-                },
-                updateAssignTeachers: function() {
-                    const sel = document.getElementById('task-assign-teacher');
-                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
-                    const filterSchool = document.getElementById('task-assign-school').value;
-                    const user = System.currentUser;
-
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
-                    });
-                },
-                add: function() {
-                    const teacherId = parseInt(document.getElementById('task-assign-teacher').value);
-                    const date = document.getElementById('task-assign-date').value;
-                    const title = document.getElementById('task-assign-title').value.trim();
-                    const details = document.getElementById('task-assign-details').value.trim();
-
-                    if(!teacherId || !date || !title) return System.utils.showAlert('الرجاء إكمال البيانات الأساسية (المعلم، التاريخ، العنوان).');
-
-                    const newTask = {
-                        id: Date.now(),
-                        assignedTo: teacherId,
-                        assignedBy: System.currentUser.id,
-                        assignerName: System.currentUser.name,
-                        date: date,
-                        title: title,
-                        details: details,
-                        status: 'pending', 
-                        executionNotes: ''
-                    };
-
-                    System.data.tasks.push(newTask);
-                    System.save();
-                    System.utils.showAlert('تم إسناد التكليف بنجاح.');
-                    
-                    document.getElementById('task-assign-title').value = '';
-                    document.getElementById('task-assign-details').value = '';
-                    this.renderAssignList();
-                },
-                // دمج المقطع المطلوب من المستخدم: renderAssignList بشكل دقيق
-                renderAssignList: function() {
-                    const tbody = document.querySelector('#tasks-assign-table tbody');
-                    tbody.innerHTML = '';
-                    const myTasks = System.data.tasks.filter(t => t.assignedBy === System.currentUser.id).reverse().slice(0, 10);
-                    
-                    if(myTasks.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لم تقم بإسناد أي تكليفات بعد.</td></tr>';
-                        return;
-                    }
-
-                    myTasks.forEach(t => {
-                        const teacher = System.data.users.find(u => u.id === t.assignedTo)?.name || 'غير معروف';
-                        let statusBadge = '<span class="badge bg-secondary">قيد الانتظار</span>';
-                        if(t.status === 'done') statusBadge = '<span class="badge bg-success">تم التنفيذ</span>';
-                        if(t.status === 'not_done') statusBadge = '<span class="badge bg-danger">لم يتم التنفيذ</span>';
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-primary cursor-pointer text-decoration-underline" onclick="System.tasks.printTask(${t.id})"><i class="fas fa-external-link-alt ms-1 text-secondary"></i>${t.title}</td>
-                            <td class="fw-bold">${teacher}</td>
-                            <td><span class="badge bg-light text-dark border">${t.date}</span></td>
-                            <td>${statusBadge}</td>
-                            <td class="no-print"><button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="System.tasks.deleteTask(${t.id})"><i class="fas fa-trash"></i></button></td>
-                        </tr>`;
-                    });
-                },
-                deleteTask: function(id) { 
-                    if(confirm('تنبيه هام: إلغاء التكليف سيحذفه كلياً من سجلات المعلم المنفذ. متابعة؟')) { 
-                        System.data.tasks = System.data.tasks.filter(t => t.id !== id); 
-                        System.save(); 
-                        this.renderAssignList(); 
-                    } 
-                },
-                initList: function() {
-                    System.utils.populateSchools('task-list-school');
-                    this.updateListFilters();
-                },
-                updateListFilters: function() {
-                    const sel = document.getElementById('task-list-teacher');
-                    sel.innerHTML = '<option value="all">كل المعلمين</option>';
-                    const filterSchool = document.getElementById('task-list-school').value;
-                    const user = System.currentUser;
-
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        } else if (user.role === 'coordinator' && t.schoolId === user.schoolId) {
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
-                    });
-                    this.renderList();
-                },
-                renderList: function() {
-                    const tbody = document.querySelector('#tasks-list-table tbody');
-                    tbody.innerHTML = '';
-                    
-                    const filterSchool = document.getElementById('task-list-school').value;
-                    const filterTeacher = document.getElementById('task-list-teacher').value;
-                    const filterStatus = document.getElementById('task-list-status').value;
-                    const user = System.currentUser;
-
-                    let filtered = [...System.data.tasks].reverse().filter(task => {
-                        const t = System.data.users.find(u => u.id === task.assignedTo);
-                        if(!t) return false;
-
-                        if (['admin', 'supervisor', 'manager'].includes(user.role) && filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
-                        if (!['admin', 'supervisor', 'manager'].includes(user.role) && t.schoolId !== user.schoolId) return false;
-                        if (filterTeacher !== 'all' && t.id != filterTeacher) return false;
-                        if (filterStatus !== 'all' && task.status !== filterStatus) return false;
-
-                        if(user.role === 'coordinator') {
-                            const teacherAssigns = System.data.assignments.filter(a => a.teacherId === t.id);
-                            let inScope = false;
-                            for(let a of teacherAssigns) {
-                                const gid = System.dashboard.getGradeId(a.classId);
-                                if (user.scope?.gradeIds?.includes(gid)) { inScope = true; break; }
-                            }
-                            if(!inScope) return false;
-                        }
-                        return true;
-                    });
-
-                    if(filtered.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-muted">لا توجد تكليفات مطابقة للبحث</td></tr>';
-                        return;
-                    }
-
-                    filtered.forEach(task => {
-                        const teacherName = System.data.users.find(u => u.id === task.assignedTo)?.name || 'غير معروف';
-                        
-                        let statusText = '<span class="text-secondary fw-bold"><i class="fas fa-clock ms-1"></i>قيد الانتظار</span>';
-                        if(task.status === 'done') statusText = '<span class="text-success fw-bold"><i class="fas fa-check-circle ms-1"></i>تم التنفيذ</span>';
-                        if(task.status === 'not_done') statusText = '<span class="text-danger fw-bold"><i class="fas fa-times-circle ms-1"></i>لم يتم التنفيذ</span>';
-
-                        const allowUpdate = (user.role === 'admin' || user.id === task.assignedBy || user.role === 'coordinator' || user.role === 'supervisor');
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-primary cursor-pointer text-decoration-underline" onclick="System.tasks.printTask(${task.id})"><i class="fas fa-external-link-alt ms-1"></i>${task.title}</td>
-                            <td class="fw-bold">${teacherName}</td>
-                            <td>${task.assignerName}</td>
-                            <td><span class="badge bg-light text-dark border">${task.date}</span></td>
-                            <td>${statusText}</td>
-                            <td class="small text-start" style="white-space: pre-wrap; max-width: 250px;">${task.executionNotes || '-'}</td>
-                            <td>
-                                ${allowUpdate ? `<button class="btn btn-sm btn-outline-info fw-bold shadow-sm" onclick="System.tasks.openStatusModal(${task.id})"><i class="fas fa-edit ms-1"></i>تحديث الحالة</button>` : '-'}
-                            </td>
-                        </tr>`;
-                    });
-                },
-                openStatusModal: function(id) {
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(!task) return;
-                    document.getElementById('task-status-id').value = id;
-                    document.getElementById('task-status-select').value = task.status === 'pending' ? 'done' : task.status;
-                    document.getElementById('task-status-notes').value = task.executionNotes || '';
-                    new bootstrap.Modal(document.getElementById('taskStatusModal')).show();
-                },
-                saveStatus: function() {
-                    const id = parseInt(document.getElementById('task-status-id').value);
-                    const status = document.getElementById('task-status-select').value;
-                    const notes = document.getElementById('task-status-notes').value.trim();
-
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(task) {
-                        task.status = status;
-                        task.executionNotes = notes;
-                        System.save();
-                        System.utils.showAlert('تم تحديث حالة التكليف بنجاح.');
-                        bootstrap.Modal.getInstance(document.getElementById('taskStatusModal')).hide();
-                        this.renderList();
-                        this.renderAssignList();
-                    }
-                },
-                printTask: function(id) {
-                    const task = System.data.tasks.find(t => t.id === id);
-                    if(!task) return;
-                    const teacher = System.data.users.find(u => u.id === task.assignedTo);
-                    const tName = teacher ? teacher.name : 'غير معروف';
-                    
-                    let statusHtml = 'قيد الانتظار';
-                    if(task.status === 'done') statusHtml = 'تم التنفيذ';
-                    if(task.status === 'not_done') statusHtml = 'لم يتم التنفيذ';
-
-                    const content = `
-                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
-                            ${System.utils.getPrintHeader('قرار تكليف رسمي')}
-                            <div style="margin-bottom: 25px;">
-                                <h4 style="margin-bottom: 10px; font-weight: bold; background: #e9ecef; padding: 10px; border-radius: 5px;">موضوع التكليف: ${task.title}</h4>
-                                <div style="padding: 15px; border-right: 4px solid #0d6efd; white-space: pre-wrap; line-height: 1.8;">${task.details}</div>
-                            </div>
-                            <table class="print-table">
-                                <tr><th style="width: 25%;">المعلم المكلَّف</th><td>${tName}</td></tr>
-                                <tr><th>المكلِّف (المُصدر)</th><td>${task.assignerName}</td></tr>
-                                <tr><th>تاريخ الإصدار</th><td>${task.date}</td></tr>
-                                <tr><th>حالة التنفيذ</th><td>${statusHtml}</td></tr>
-                                ${task.status !== 'pending' ? `<tr><th>ملاحظات التنفيذ</th><td style="white-space: pre-wrap;">${task.executionNotes || '-'}</td></tr>` : ''}
-                            </table>
-                            <div style="margin-top: 50px; display: flex; justify-content: space-between; page-break-inside: avoid;">
-                                <div style="text-align: center;">
-                                    <strong>توقيع المعلم المكلَّف بالاستلام</strong>
-                                    <div style="margin-top: 20px; border-bottom: 1px dashed #000; width: 150px;"></div>
-                                </div>
-                                <div style="text-align: center;">
-                                    <strong>توقيع الإدارة / المكلِّف</strong>
-                                    <div style="margin-top: 20px; border-bottom: 1px dashed #000; width: 150px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('print-area-container').innerHTML = content;
-                    document.body.classList.add('printing-notification');
-                    window.print();
-                    document.body.classList.remove('printing-notification');
-                }
-            },
-
-            meetings: {
-                init: function() {
-                    const dateInput = document.getElementById('meet-date');
-                    dateInput.valueAsDate = new Date();
-                    
-                    const timeInput = document.getElementById('meet-time');
-                    const now = new Date();
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    timeInput.value = `${hours}:${minutes}`;
-
-                    this.updateDayName(dateInput.value);
-                    dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
-
-                    this.renderMembersSelect();
-                    this.renderList();
-                },
-                updateDayName: function(dateStr) {
-                    if(!dateStr) return;
-                    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                    const d = new Date(dateStr);
-                    document.getElementById('meet-day').value = days[d.getDay()];
-                },
-                renderMembersSelect: function() {
-                    const container = document.getElementById('meet-members-container');
-                    container.innerHTML = '';
-                    const user = System.currentUser;
-                    
-                    let teachers = System.data.users.filter(u => u.role === 'teacher');
-                    if (!['admin', 'supervisor', 'manager'].includes(user.role)) {
-                        teachers = teachers.filter(t => t.schoolId === user.schoolId);
-                    }
-
-                    if(teachers.length === 0) {
-                        container.innerHTML = '<span class="text-muted">لا يوجد معلمين مسجلين.</span>';
-                        return;
-                    }
-
-                    teachers.forEach(t => {
-                        container.innerHTML += `
-                            <div class="form-check border p-2 rounded bg-white shadow-sm">
-                                <input class="form-check-input meet-member-check" type="checkbox" value="${t.id}" id="meet_mem_${t.id}">
-                                <label class="form-check-label cursor-pointer fw-bold" for="meet_mem_${t.id}">${t.name}</label>
-                            </div>
-                        `;
-                    });
-                },
-                selectAllMembers: function() {
-                    const checks = document.querySelectorAll('.meet-member-check');
-                    let allChecked = true;
-                    checks.forEach(c => { if(!c.checked) allChecked = false; });
-                    checks.forEach(c => c.checked = !allChecked);
-                },
-                add: async function() {
-                    const title = document.getElementById('meet-title').value.trim();
-                    const date = document.getElementById('meet-date').value;
-                    const time = document.getElementById('meet-time').value;
-                    const day = document.getElementById('meet-day').value;
-                    const minutes = document.getElementById('meet-minutes').value.trim();
-                    const recommendations = document.getElementById('meet-recommendations').value.trim();
-                    const evidenceInput = document.getElementById('meet-evidence');
-                    
-                    const selectedMembers = [];
-                    document.querySelectorAll('.meet-member-check:checked').forEach(cb => {
-                        selectedMembers.push({ teacherId: parseInt(cb.value), present: true });
-                    });
-
-                    if(!title || !date || selectedMembers.length === 0) {
-                        return System.utils.showAlert('الرجاء كتابة عنوان الاجتماع وتحديد التاريخ واختيار عضو واحد على الأقل.');
-                    }
-
-                    // Process images
-                    let evidencesBase64 = [];
-                    if(evidenceInput.files && evidenceInput.files.length > 0) {
-                        System.utils.showAlert("جاري معالجة الصور... يرجى الانتظار");
-                        for(let i=0; i<evidenceInput.files.length; i++) {
-                            const file = evidenceInput.files[i];
-                            if(file.size > 3000000) {
-                                System.utils.showAlert(`حجم الصورة ${file.name} كبير جداً، سيتم تخطيها.`);
-                                continue;
-                            }
-                            try {
-                                const b64 = await System.utils.fileToBase64Compressed(file, 800, 800, 0.6);
-                                evidencesBase64.push(b64);
-                            } catch(e) {
-                                console.error(e);
-                            }
-                        }
-                    }
-
-                    const newMeeting = {
-                        id: Date.now(),
-                        creatorId: System.currentUser.id,
-                        schoolId: System.currentUser.schoolId,
-                        title: title,
-                        date: date,
-                        time: time,
-                        day: day,
-                        minutes: minutes,
-                        recommendations: recommendations,
-                        members: selectedMembers,
-                        evidences: evidencesBase64
-                    };
-
-                    System.data.meetings.push(newMeeting);
-                    System.save();
-                    System.utils.showAlert('تم حفظ الاجتماع المهني بنجاح.');
-                    
-                    // Reset Form
-                    document.getElementById('meet-title').value = '';
-                    document.getElementById('meet-minutes').value = '';
-                    document.getElementById('meet-recommendations').value = '';
-                    document.getElementById('meet-evidence').value = '';
-                    document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
-                    
-                    this.renderList();
-                },
-                renderList: function() {
-                    const tbody = document.querySelector('#meetings-table tbody');
-                    tbody.innerHTML = '';
-                    const user = System.currentUser;
-
-                    let myMeetings = [...System.data.meetings].reverse();
-                    if(!['admin', 'supervisor', 'manager'].includes(user.role)) {
-                        myMeetings = myMeetings.filter(m => m.schoolId === user.schoolId);
-                    }
-
-                    if(myMeetings.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد اجتماعات مهنية مسجلة.</td></tr>';
-                        return;
-                    }
-
-                    myMeetings.forEach(m => {
-                        const membersCount = m.members.length;
-                        const presentCount = m.members.filter(mem => mem.present).length;
-                        const percentage = membersCount > 0 ? Math.round((presentCount / membersCount) * 100) : 0;
-                        const allowEdit = user.role === 'admin' || m.creatorId === user.id;
-                        const timeStr = m.time ? m.time : '';
-
-                        tbody.innerHTML += `<tr>
-                            <td class="fw-bold text-success cursor-pointer text-decoration-underline" onclick="System.meetings.openDetails(${m.id})"><u><i class="fas fa-file-alt ms-1 text-secondary"></i>${m.title}</u></td>
-                            <td><span class="badge bg-light text-dark border">${m.date} - ${timeStr}</span></td>
-                            <td>${membersCount}</td>
-                            <td><span class="badge bg-${percentage >= 80 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}">${percentage}%</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info text-white shadow-sm" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
-                                ${allowEdit ? `<button class="btn btn-sm btn-outline-danger shadow-sm ms-1" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
-                            </td>
-                        </tr>`;
-                    });
-                },
-                openDetails: function(id) {
-                    const m = System.data.meetings.find(x => x.id === id);
-                    if(!m) return;
-                    
-                    document.getElementById('manage-meet-id').value = m.id;
-                    document.getElementById('manage-meet-title').innerText = m.title;
-                    document.getElementById('manage-meet-date').innerText = `${m.date} (${m.day})`;
-                    document.getElementById('manage-meet-time').innerText = m.time || 'غير محدد';
-                    document.getElementById('manage-meet-minutes').innerText = m.minutes || 'لا يوجد محضر مسجل.';
-                    document.getElementById('manage-meet-rec').innerText = m.recommendations || 'لا توجد توصيات.';
-
-                    const attTbody = document.querySelector('#meet-attendance-table tbody');
-                    attTbody.innerHTML = '';
-                    
-                    m.members.forEach(mem => {
-                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
-                        const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
-                        const text = mem.present ? 'حاضر' : 'غائب';
-                        const icon = mem.present ? 'fa-check' : 'fa-times';
-                        
-                        attTbody.innerHTML += `<tr>
-                            <td class="fw-bold">${tName}</td>
-                            <td>
-                                <span class="badge ${badgeClass} fs-6 attendance-toggle shadow-sm" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
-                                    <i class="fas ${icon} ms-1"></i>${text}
-                                </span>
-                            </td>
-                        </tr>`;
-                    });
-
-                    const evContainer = document.getElementById('manage-meet-evidences-container');
-                    evContainer.innerHTML = '';
-                    if(m.evidences && m.evidences.length > 0) {
-                        m.evidences.forEach(evB64 => {
-                            const img = document.createElement('img');
-                            img.src = evB64;
-                            img.className = 'evidence-img-thumb';
-                            img.onclick = () => {
-                                document.getElementById('preview-image-elem').src = evB64;
-                                document.getElementById('download-image-btn').href = evB64;
-                                new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
-                            };
-                            evContainer.appendChild(img);
-                        });
-                    } else {
-                        evContainer.innerHTML = '<span class="text-muted small">لا توجد صور أو شواهد مرفقة.</span>';
-                    }
-
-                    new bootstrap.Modal(document.getElementById('meetingDetailsModal')).show();
-                },
-                toggleAttendance: function(meetId, teacherId) {
-                    const m = System.data.meetings.find(x => x.id === meetId);
-                    if(!m) return;
-                    
-                    if(System.currentUser.role !== 'admin' && m.creatorId !== System.currentUser.id) {
-                        return System.utils.showAlert('لا تملك صلاحية تعديل الحضور لهذا الاجتماع.');
-                    }
-
-                    const mem = m.members.find(x => x.teacherId === teacherId);
-                    if(mem) {
-                        mem.present = !mem.present;
-                        System.save();
-                        this.openDetails(meetId);
-                        this.renderList();
-                    }
-                },
-                deleteMeeting: function(id) {
-                    if(confirm('هل أنت متأكد من حذف هذا الاجتماع نهائياً؟')) {
-                        System.data.meetings = System.data.meetings.filter(m => m.id !== id);
-                        System.save();
-                        this.renderList();
-                    }
-                },
-                printMeeting: function() {
-                    const id = parseInt(document.getElementById('manage-meet-id').value);
-                    const m = System.data.meetings.find(x => x.id === id);
-                    if(!m) return;
-
-                    let presentList = [];
-                    let absentList = [];
-                    m.members.forEach(mem => {
-                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'غير معروف';
-                        if(mem.present) presentList.push(tName);
-                        else absentList.push(tName);
-                    });
-
-                    const creatorName = System.data.users.find(u => u.id === m.creatorId)?.name || 'الإدارة';
-
-                    // Prepare Evidence Images block for printing
-                    let evidenceHtml = '';
-                    if(m.evidences && m.evidences.length > 0) {
-                        evidenceHtml = `
-                            <div style="margin-top: 30px; page-break-inside: avoid;">
-                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">الشواهد والمرفقات:</h5>
-                                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
-                                    ${m.evidences.map(img => `<img src="${img}" style="max-width: 45%; max-height: 250px; border: 1px solid #ccc; padding: 5px; border-radius: 5px;">`).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    const content = `
-                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
-                            ${System.utils.getPrintHeader('محضر اجتماع تنمية مهنية')}
-                            
-                            <table class="print-table">
-                                <tr>
-                                    <th style="width: 20%;">عنوان الاجتماع</th>
-                                    <td colspan="3"><strong style="font-size: 1.2rem;">${m.title}</strong></td>
-                                </tr>
-                                <tr>
-                                    <th style="width: 20%;">اليوم والتاريخ</th>
-                                    <td>${m.day}، ${m.date}</td>
-                                    <th style="width: 20%;">الوقت</th>
-                                    <td>${m.time || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <th>رئيس الاجتماع</th>
-                                    <td colspan="3">${creatorName}</td>
-                                </tr>
-                            </table>
-
-                            <div style="margin-bottom: 25px;">
-                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">محضر ونقاط الاجتماع:</h5>
-                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.minutes || 'لا توجد بيانات.'}</div>
-                            </div>
-
-                            <div style="margin-bottom: 25px;">
-                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">التوصيات:</h5>
-                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.recommendations || 'لا توجد توصيات.'}</div>
-                            </div>
-
-                            <div style="page-break-inside: avoid;">
-                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">سجل الحضور والغياب:</h5>
-                                <div style="display: flex; gap: 20px;">
-                                    <div style="flex: 1;">
-                                        <div style="background: #e8f5e9 !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #c8e6c9;">الحاضرون (${presentList.length})</div>
-                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
-                                            ${presentList.length > 0 ? presentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
-                                        </ul>
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <div style="background: #ffebee !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #ffcdd2;">الغائبون (${absentList.length})</div>
-                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
-                                            ${absentList.length > 0 ? absentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee; color: #d32f2f;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            ${evidenceHtml}
-
-                            <div style="margin-top: 60px; display: flex; justify-content: space-between; page-break-inside: avoid;">
-                                <div style="text-align: center; width: 45%;">
-                                    <strong>الاعتماد (رئيس الاجتماع)</strong>
-                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
-                                </div>
-                                <div style="text-align: center; width: 45%;">
-                                    <strong>اعتماد مدير المدرسة</strong>
-                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    document.getElementById('print-area-container').innerHTML = content;
-                    document.body.classList.add('printing-notification');
-                    window.print();
-                    document.body.classList.remove('printing-notification');
                 }
             },
 
@@ -3267,153 +2732,6 @@
                 }
             },
 
-            teacherFile: { 
-                init: function() { 
-                    System.utils.populateSchools('file-school-select');
-                    this.updateTeachers();
-                }, 
-                updateTeachers: function() {
-                    const sel = document.getElementById('file-teacher-select');
-                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
-                    const filterSchool = document.getElementById('file-school-select').value;
-                    const isCoord = System.currentUser.role === 'coordinator';
-                    const mySchool = System.currentUser.schoolId;
-
-                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        } else if (!isCoord || (isCoord && t.schoolId === mySchool)) {
-                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
-                    });
-                },
-                render: function() { 
-                    const tid = parseInt(document.getElementById('file-teacher-select').value); 
-                    if(!tid) return document.getElementById('teacher-file-content').classList.add('hidden'); 
-                    document.getElementById('teacher-file-content').classList.remove('hidden'); 
-                    
-                    const t = System.data.users.find(u => u.id === tid); 
-                    const schoolName = System.data.schools.find(s=>s.id === t.schoolId)?.name || '-'; 
-                    document.getElementById('tf-name').innerText = t.name; 
-                    document.getElementById('tf-school').innerText = schoolName; 
-                    
-                    const praise = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'praise'); 
-                    const notes = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'note'); 
-                    const verbal = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'verbal_warning'); 
-                    const written = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'written_warning'); 
-                    const violations = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'violation'); 
-                    
-                    const gapsTable = document.querySelector('#table-gaps tbody'); gapsTable.innerHTML = ''; let gapVisitsCount = 0; const distinctVisits = []; System.data.evaluations.filter(e => e.teacherId === tid).forEach(e => { const key = `${e.weekId}_${e.classId}`; if(!distinctVisits.includes(key)) distinctVisits.push(key); }); distinctVisits.forEach(key => { const [wid, cid] = key.split('_'); const weekName = System.data.weeks.find(w => w.id == wid)?.name || '-'; const evals = System.data.evaluations.filter(e => e.teacherId === tid && e.weekId == wid && e.classId == cid); if(evals.length > 0) { const date = evals[0].date; let className = ''; System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => { if(c.id === cid) className = `${c.name}`; })))); const assign = System.data.assignments.find(a => a.teacherId === tid && a.classId === cid); const subName = assign ? System.utils.getSubjectName(assign.subjectId) : '-'; const presentIds = evals.map(e => e.criteriaId); const missingCriteria = System.data.criteria.filter(c => !presentIds.includes(c.id)); const missingNames = missingCriteria.map(c => c.name); const missingCount = missingCriteria.length; if(missingCount > 0) { gapVisitsCount++; const performance = Math.round((presentIds.length / System.data.criteria.length) * 100); gapsTable.innerHTML += `<tr><td>${className}</td><td>${weekName}</td><td>${subName}</td><td>${date}</td><td class="text-danger fw-bold text-center">${missingCount}</td><td class="small text-muted">${missingNames.join(' ، ')}</td><td><span class="badge bg-${performance < 50 ? 'danger' : 'warning'}">${performance}%</span></td></tr>`; } } }); 
-                    
-                    const visitsTbody = document.querySelector('#table-visits tbody');
-                    visitsTbody.innerHTML = '';
-                    const teacherVisits = (System.data.visits || []).filter(v => v.teacherId === tid).sort((a,b) => new Date(a.date) - new Date(b.date));
-                    let totalPercent = 0;
-                    
-                    if(teacherVisits.length === 0) {
-                        visitsTbody.innerHTML = '<tr><td colspan="8" class="text-muted">لا توجد زيارات مسجلة لهذا المعلم</td></tr>';
-                    } else {
-                        teacherVisits.forEach((v, idx) => {
-                            totalPercent += v.percentage;
-                            const weekName = System.data.weeks.find(w => w.id == v.weekId)?.name || '-';
-                            let className = '';
-                            System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => { if(c.id === v.classId) className = c.name; }))));
-                            
-                            const color = v.percentage < 60 ? 'danger' : (v.percentage < 85 ? 'warning' : 'success');
-                            visitsTbody.innerHTML += `<tr>
-                                <td>${idx + 1}</td>
-                                <td>${v.date}</td>
-                                <td>${weekName}</td>
-                                <td>${v.lessonTitle}</td>
-                                <td>${className}</td>
-                                <td>${v.visitorName}</td>
-                                <td class="fw-bold text-${color}">${v.percentage}%</td>
-                                <td class="small text-start">${v.notes || '-'}</td>
-                            </tr>`;
-                        });
-                    }
-                    const generalAvg = teacherVisits.length > 0 ? Math.round(totalPercent / teacherVisits.length) : 0;
-                    document.getElementById('tf-visits-average').innerText = `${generalAvg}%`;
-
-                    const role = System.currentUser.role;
-                    const resTabBtn = document.getElementById('tab-btn-results');
-                    if (role === 'admin' || role === 'supervisor') {
-                        resTabBtn.parentElement.style.display = 'block';
-                        
-                        const table = document.getElementById('table-tf-results');
-                        table.querySelector('thead').innerHTML = `
-                            <tr>
-                                <th rowspan="2" class="align-middle">الصف والفصل</th>
-                                <th colspan="3" class="table-primary border-primary">الفصل الدراسي الأول</th>
-                                <th colspan="3" class="table-success border-success">الفصل الدراسي الثاني</th>
-                                <th rowspan="2" class="align-middle bg-warning text-dark">المتوسط العام</th>
-                            </tr>
-                            <tr>
-                                <th class="table-primary border-primary">الفترة الأولى</th><th class="table-primary border-primary">الفترة الثانية</th><th class="table-primary border-primary">نهاية الفصل</th>
-                                <th class="table-success border-success">الفترة الأولى</th><th class="table-success border-success">الفترة الثانية</th><th class="table-success border-success">نهاية الفصل</th>
-                            </tr>
-                        `;
-                        const resTbody = table.querySelector('tbody');
-                        const assignments = System.data.assignments.filter(a => a.teacherId === tid);
-                        resTbody.innerHTML = '';
-                        
-                        if(assignments.length === 0) {
-                            resTbody.innerHTML = `<tr><td colspan="8" class="text-muted text-center">لا توجد فصول مسندة للمعلم</td></tr>`;
-                        } else {
-                            assignments.forEach(a => {
-                                let className = '';
-                                System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                    if(c.id === a.classId) className = `${g.name} - ${c.name}`;
-                                }))));
-
-                                const res = System.data.teacherResults.filter(r => r.teacherId === tid && r.classId === a.classId);
-                                const getVal = (sem, type) => { const rec = res.find(r => r.semester === sem && r.examType === type); return rec ? rec.percentage : null; };
-
-                                const vals = [ getVal("1", "p1"), getVal("1", "p2"), getVal("1", "end"), getVal("2", "p1"), getVal("2", "p2"), getVal("2", "end") ];
-                                let total = 0, count = 0;
-                                vals.forEach(v => { if(v !== null) { total += v; count++; } });
-                                const avg = count > 0 ? Math.round(total / count) : '-';
-                                resTbody.innerHTML += `<tr>
-                                    <td class="fw-bold">${className}</td>
-                                    <td>${vals[0]!==null ? vals[0]+'%' : '-'}</td>
-                                    <td>${vals[1]!==null ? vals[1]+'%' : '-'}</td>
-                                    <td class="fw-bold">${vals[2]!==null ? vals[2]+'%' : '-'}</td>
-                                    <td>${vals[3]!==null ? vals[3]+'%' : '-'}</td>
-                                    <td>${vals[4]!==null ? vals[4]+'%' : '-'}</td>
-                                    <td class="fw-bold">${vals[5]!==null ? vals[5]+'%' : '-'}</td>
-                                    <td class="fw-bold text-${avg !== '-' ? (avg < 60 ? 'danger' : (avg < 85 ? 'warning' : 'success')) : 'muted'} bg-light">${avg !== '-' ? avg+'%' : '-'}</td>
-                                </tr>`;
-                            });
-                        }
-                    } else {
-                        resTabBtn.parentElement.style.display = 'none';
-                    }
-
-                    document.getElementById('tf-praise-count').innerText = praise.length; 
-                    document.getElementById('tf-note-count').innerText = notes.length; 
-                    document.getElementById('tf-verbal-count').innerText = verbal.length; 
-                    document.getElementById('tf-written-count').innerText = written.length; 
-                    document.getElementById('tf-violation-count').innerText = violations.length; 
-                    document.getElementById('tf-gaps-count').innerText = gapVisitsCount; 
-                    
-                    const fillTable = (id, data, hasImage) => { 
-                        const tbody = document.querySelector(`#${id} tbody`); tbody.innerHTML = ''; 
-                        data.forEach(item => { 
-                            const imgHtml = hasImage && item.image ? `<img src="${item.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${item.image}')">` : '-';
-                            tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.situation}</td><td>${item.action}</td><td>${imgHtml}</td></tr>`; 
-                        }); 
-                        if(data.length===0) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">لا يوجد سجل</td></tr>`; 
-                    }; 
-                    
-                    fillTable('table-praise', praise, true); 
-                    fillTable('table-notes', notes, true); 
-                    fillTable('table-verbal', verbal, true); 
-                    fillTable('table-written', written, true); 
-                    fillTable('table-violations', violations, true);
-                }
-            },
-
             reports: {
                 init: function() {
                     System.utils.populateSchools('rep-school');
@@ -3517,13 +2835,17 @@
                         return true;
                     });
 
-                    // Perf Table
+                    // حسابات الجدول وأداء المعلمين
                     const tStats = {};
                     evals.forEach(e => {
                         if(!tStats[e.teacherId]) tStats[e.teacherId] = { active: new Set(), totalClasses: new Set() };
                         tStats[e.teacherId].active.add(`${e.weekId}_${e.classId}_${e.criteriaId}`);
                         tStats[e.teacherId].totalClasses.add(`${e.weekId}_${e.classId}`);
                     });
+
+                    let totalExpected = 0;
+                    let totalActual = 0;
+                    let teachersChartData = [];
 
                     Object.keys(tStats).forEach(tid => {
                         const t = System.data.users.find(u => u.id == tid);
@@ -3533,9 +2855,46 @@
                             const actual = tStats[tid].active.size;
                             const percent = maxPossible > 0 ? Math.round((actual / maxPossible) * 100) : 0;
                             const subName = System.data.subjects.find(s => s.id === t.subjectId)?.name || '-';
+                            
                             tbodyPerf.innerHTML += `<tr><td>${t.name}</td><td>${subName}</td><td>${clsCount}</td><td>${actual} من ${maxPossible}</td><td>${percent}%</td></tr>`;
+                            
+                            totalExpected += maxPossible;
+                            totalActual += actual;
+                            if(maxPossible > 0) {
+                                teachersChartData.push({ name: t.name, percent: percent });
+                            }
                         }
                     });
+
+                    // رسوم بيانية (Chart.js)
+                    if(System.charts.pie) System.charts.pie.destroy();
+                    const pieCtx = document.getElementById('chart-pie');
+                    if(pieCtx) {
+                        const inactive = totalExpected - totalActual;
+                        System.charts.pie = new Chart(pieCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['مفعل', 'غير مفعل'],
+                                datasets: [{ data: [totalActual, inactive >= 0 ? inactive : 0], backgroundColor: ['#198754', '#dc3545'] }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false }
+                        });
+                    }
+
+                    if(System.charts.bar) System.charts.bar.destroy();
+                    const barCtx = document.getElementById('chart-bar');
+                    if(barCtx) {
+                        teachersChartData.sort((a,b) => b.percent - a.percent);
+                        let topTeachers = teachersChartData.slice(0, 5);
+                        System.charts.bar = new Chart(barCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: topTeachers.map(t => t.name),
+                                datasets: [{ label: 'نسبة الإنجاز %', data: topTeachers.map(t => t.percent), backgroundColor: '#0d6efd' }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+                        });
+                    }
 
                     // Data Table
                     evals.forEach(e => {
@@ -3729,148 +3088,156 @@
                     });
                 }
             },
-            
+
             notifications: {
                 init: function() {
                     System.utils.populateSchools('notif-filter-school');
                     this.updateStages();
-                },
-                updateStages: function() {
-                    const sSel = document.getElementById('notif-filter-stage');
-                    sSel.innerHTML = '<option value="all">كل المراحل</option>';
-                    const schoolIdStr = document.getElementById('notif-filter-school').value;
-                    const targetSchoolId = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdStr !== 'all' && schoolIdStr ? parseInt(schoolIdStr) : System.currentUser.schoolId;
-
-                    if (targetSchoolId) {
-                        const school = System.data.schools.find(s => s.id === targetSchoolId);
-                        if (school && school.stages) school.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
-                    } else if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                        System.data.schools.forEach(s => s.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
-                    }
                     this.render();
                 },
+                updateStages: function() {
+                    const sel = document.getElementById('notif-filter-stage');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="all">كل المراحل</option>';
+                    const sid = document.getElementById('notif-filter-school').value;
+                    System.data.schools.forEach(s => {
+                        if (sid !== 'all' && sid && s.id != sid) return;
+                        s.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`);
+                    });
+                },
                 render: function() {
-                    const ul = document.getElementById('notif-list');
-                    ul.innerHTML = '';
-                    
+                    const list = document.getElementById('notif-list');
+                    if (!list) return;
+                    list.innerHTML = '';
                     const filterSchool = document.getElementById('notif-filter-school').value;
                     const filterStage = document.getElementById('notif-filter-stage').value;
                     const filterName = document.getElementById('notif-filter-name').value.toLowerCase();
-                    const user = System.currentUser;
-
-                    const filteredNotifs = [...System.data.notifications].reverse().filter(n => {
+                    
+                    let notifs = System.data.notifications || [];
+                    let count = 0;
+                    
+                    notifs.slice().reverse().forEach(n => {
                         const t = System.data.users.find(u => u.id === n.teacherId);
-                        if (!t) return false;
-                        if(user.role === 'teacher' && t.id !== user.id) return false;
-                        
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if (filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
-                        } else if (user.role !== 'teacher' && t.schoolId !== user.schoolId) {
-                            return false;
-                        }
-                        if(filterName && !t.name.toLowerCase().includes(filterName)) return false;
+                        if(!t) return;
+                        if(filterSchool !== 'all' && t.schoolId != filterSchool) return;
+                        if(filterName && !t.name.toLowerCase().includes(filterName)) return;
 
                         if (filterStage !== 'all') {
-                            let match = false;
-                            const assigns = System.data.assignments.filter(a => a.teacherId === t.id);
-                            for(let a of assigns) {
-                                System.data.schools.forEach(s => s.stages.forEach(st => {
-                                    if(st.id == filterStage && st.grades.find(g => g.classes.find(c => c.id === a.classId))) match = true;
-                                }));
-                            }
-                            if(!match) return false;
+                            let inStage = false;
+                            System.data.schools.forEach(s => s.stages.forEach(st => {
+                                if (st.id == filterStage) {
+                                    const assigns = System.data.assignments.filter(a => a.teacherId === t.id);
+                                    assigns.forEach(a => {
+                                        st.grades.forEach(g => {
+                                            if (g.classes.find(c => c.id === a.classId)) inStage = true;
+                                        });
+                                    });
+                                }
+                            }));
+                            if (!inStage) return;
                         }
-                        return true;
-                    });
 
-                    document.getElementById('notif-count-display').innerText = filteredNotifs.length;
-                    
-                    if(filteredNotifs.length === 0) {
-                        ul.innerHTML = '<li class="list-group-item text-muted">لا يوجد إشعارات.</li>';
-                        return;
-                    }
-                    
-                    filteredNotifs.forEach(n => {
-                        const t = System.data.users.find(u => u.id === n.teacherId);
-                        const tName = t ? t.name : 'مستخدم محذوف';
-                        ul.innerHTML += `<li class="list-group-item border-start border-4 border-success mb-2">
-                            <div class="d-flex justify-content-between">
-                                <strong class="text-primary">${tName}</strong>
-                                <span class="badge bg-light text-dark">${n.date}</span>
+                        let missingText = n.missing ? `<div class="mt-2 small text-danger"><b>البنود الناقصة:</b> ${n.missing}</div>` : '';
+                        list.innerHTML += `<li class="list-group-item">
+                            <div class="d-flex justify-content-between w-100">
+                                <h6 class="mb-1 fw-bold text-primary">${t.name}</h6>
+                                <small>${n.date}</small>
                             </div>
-                            <p class="mt-2 mb-1">${n.details}</p>
-                            ${n.missing ? `<small class="text-danger fw-bold">النواقص: ${n.missing}</small>` : ''}
+                            <p class="mb-1 small">${n.details}</p>
+                            ${missingText}
                         </li>`;
+                        count++;
                     });
+                    
+                    if(count === 0) list.innerHTML = '<li class="list-group-item text-muted text-center">لا توجد إشعارات تطابق البحث</li>';
+                    const countDisplay = document.getElementById('notif-count-display');
+                    if (countDisplay) countDisplay.innerText = count;
                 }
             },
 
             procedures: {
                 init: function() {
-                    const tSel = document.getElementById('proc-teacher');
-                    tSel.innerHTML = '<option value="">اختر المعلم</option>';
+                    const sel = document.getElementById('proc-teacher');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
                     System.data.users.filter(u => u.role === 'teacher').forEach(t => {
-                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                            tSel.innerHTML += `<option value="${t.id}">${t.name} - ${System.data.schools.find(s=>s.id===t.schoolId)?.name||''}</option>`;
-                        } else if (t.schoolId === System.currentUser.schoolId) {
-                            tSel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
-                        }
+                        sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
                     });
                     document.getElementById('proc-date').valueAsDate = new Date();
                     System.utils.populateSchools('proc-filter-school');
                     this.renderList();
                 },
                 add: async function() {
-                    const tid = parseInt(document.getElementById('proc-teacher').value);
+                    const teacherId = document.getElementById('proc-teacher').value;
                     const type = document.getElementById('proc-type').value;
                     const date = document.getElementById('proc-date').value;
-                    const situation = document.getElementById('proc-situation').value.trim();
-                    const action = document.getElementById('proc-action').value.trim();
-                    const imageInput = document.getElementById('proc-image');
+                    const situation = document.getElementById('proc-situation').value;
+                    const action = document.getElementById('proc-action').value;
+                    const imgInput = document.getElementById('proc-image');
 
-                    if(!tid || !date || !situation || !action) return System.utils.showAlert('الرجاء تعبئة البيانات الأساسية (المعلم، التاريخ، الموقف، الإجراء).');
-                    
-                    let imageBase64 = null;
-                    if(imageInput.files && imageInput.files[0]) {
+                    if(!teacherId || !date || !situation || !action) {
+                        return System.utils.showAlert('الرجاء إكمال جميع الحقول.');
+                    }
+
+                    let imgB64 = '';
+                    if(imgInput.files && imgInput.files[0]) {
                         try {
-                            imageBase64 = await System.utils.fileToBase64Compressed(imageInput.files[0]);
+                            imgB64 = await System.utils.fileToBase64Compressed(imgInput.files[0], 800, 800);
                         } catch(e) {
-                            return System.utils.showAlert("حدث خطأ أثناء معالجة الصورة.");
+                            console.error(e);
                         }
                     }
 
-                    System.data.procedures.push({ id: Date.now(), teacherId: tid, type, date, situation, action, image: imageBase64 });
+                    if(!System.data.procedures) System.data.procedures = [];
+                    System.data.procedures.push({
+                        id: Date.now(),
+                        teacherId: parseInt(teacherId),
+                        type: type,
+                        date: date,
+                        situation: situation,
+                        action: action,
+                        image: imgB64
+                    });
                     System.save();
+                    System.utils.showAlert('تم حفظ الإجراء بنجاح.');
                     
                     document.getElementById('proc-situation').value = '';
                     document.getElementById('proc-action').value = '';
                     document.getElementById('proc-image').value = '';
+                    
                     this.renderList();
                 },
                 renderList: function() {
                     const tbody = document.querySelector('#procedures-table tbody');
+                    if (!tbody) return;
                     tbody.innerHTML = '';
-                    const types = { 'praise': 'شكر', 'note': 'ملاحظة', 'verbal_warning': 'تنبيه شفهي', 'written_warning': 'تنبيه كتابي', 'violation': 'مخالفة' };
-                    const filterSchool = document.getElementById('proc-filter-school').value;
-                    const user = System.currentUser;
-
-                    const filteredProcedures = [...System.data.procedures].reverse().filter(p => {
+                    const filterSchool = document.getElementById('proc-filter-school')?.value;
+                    
+                    const procs = (System.data.procedures || []).slice().reverse();
+                    
+                    const typeMap = { 'praise': 'شكر وثناء', 'note': 'ملاحظة', 'verbal_warning': 'تنبيه شفهي', 'written_warning': 'تنبيه كتابي', 'violation': 'مخالفة' };
+                    const badgeMap = { 'praise': 'success', 'note': 'info', 'verbal_warning': 'secondary', 'written_warning': 'dark', 'violation': 'danger' };
+                    
+                    let hasData = false;
+                    procs.forEach(p => {
                         const t = System.data.users.find(u => u.id === p.teacherId);
-                        if(!t) return false;
-                        if (['admin', 'supervisor', 'manager'].includes(user.role)) {
-                            if (filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return false;
-                        } else if (t.schoolId !== user.schoolId) {
-                            return false;
-                        }
-                        return true;
+                        if(!t) return;
+                        if(filterSchool && filterSchool !== 'all' && t.schoolId != filterSchool) return;
+                        
+                        const imgHtml = p.image ? `<img src="${p.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${p.image}')">` : '-';
+                        
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold">${t.name}</td>
+                            <td><span class="badge bg-${badgeMap[p.type]}">${typeMap[p.type]}</span></td>
+                            <td>${p.date}</td>
+                            <td class="small">${p.situation}</td>
+                            <td class="small">${p.action}</td>
+                            <td>${imgHtml}</td>
+                            <td><button class="btn btn-sm btn-danger" onclick="System.procedures.delete(${p.id})"><i class="fas fa-trash"></i></button></td>
+                        </tr>`;
+                        hasData = true;
                     });
-
-                    filteredProcedures.forEach(p => {
-                        const t = System.data.users.find(u => u.id === p.teacherId);
-                        const tName = t ? t.name : 'غير معروف';
-                        const imageHtml = p.image ? `<img src="${p.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${p.image}')">` : '-';
-                        tbody.innerHTML += `<tr><td>${tName}</td><td>${types[p.type]}</td><td>${p.date}</td><td>${p.situation}</td><td>${p.action}</td><td>${imageHtml}</td><td><button class="btn btn-sm btn-danger" onclick="System.procedures.delete(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
-                    });
+                    if(!hasData) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد إجراءات مسجلة</td></tr>';
                 },
                 delete: function(id) {
                     if(confirm('هل أنت متأكد من الحذف؟')) {
@@ -3879,10 +3246,668 @@
                         this.renderList();
                     }
                 },
-                previewImage: function(base64Data) {
-                    document.getElementById('preview-image-elem').src = base64Data;
-                    document.getElementById('download-image-btn').href = base64Data;
+                previewImage: function(b64) {
+                    document.getElementById('preview-image-elem').src = b64;
+                    document.getElementById('download-image-btn').href = b64;
                     new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                }
+            },
+
+            tasks: {
+                initAssign: function() {
+                    System.utils.populateSchools('task-assign-school');
+                    this.updateAssignTeachers();
+                    document.getElementById('task-assign-date').valueAsDate = new Date();
+                    this.renderAssignList();
+                },
+                updateAssignTeachers: function() {
+                    const sel = document.getElementById('task-assign-teacher');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
+                    const filterSchool = document.getElementById('task-assign-school').value;
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if(filterSchool !== 'all' && t.schoolId != filterSchool) return;
+                        sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                    });
+                },
+                add: function() {
+                    const teacherId = document.getElementById('task-assign-teacher').value;
+                    const date = document.getElementById('task-assign-date').value;
+                    const title = document.getElementById('task-assign-title').value;
+                    const details = document.getElementById('task-assign-details').value;
+
+                    if(!teacherId || !date || !title) return System.utils.showAlert('الرجاء إكمال الحقول الأساسية.');
+
+                    if(!System.data.tasks) System.data.tasks = [];
+                    System.data.tasks.push({
+                        id: Date.now(),
+                        teacherId: parseInt(teacherId),
+                        creatorId: System.currentUser.id,
+                        date: date,
+                        title: title,
+                        details: details,
+                        status: 'pending',
+                        notes: ''
+                    });
+                    System.save();
+                    System.utils.showAlert('تم إسناد التكليف بنجاح.');
+                    
+                    document.getElementById('task-assign-title').value = '';
+                    document.getElementById('task-assign-details').value = '';
+                    this.renderAssignList();
+                },
+                renderAssignList: function() {
+                    const tbody = document.querySelector('#tasks-assign-table tbody');
+                    if(!tbody) return;
+                    tbody.innerHTML = '';
+                    
+                    const myTasks = (System.data.tasks || []).filter(t => t.creatorId === System.currentUser.id).slice().reverse().slice(0, 10);
+                    
+                    const statusMap = { 'pending': '<span class="badge bg-warning text-dark">قيد الانتظار</span>', 'done': '<span class="badge bg-success">تم التنفيذ</span>', 'not_done': '<span class="badge bg-danger">لم يتم التنفيذ</span>' };
+                    
+                    myTasks.forEach(t => {
+                        const teacher = System.data.users.find(u => u.id === t.teacherId)?.name || 'غير معروف';
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold text-primary">${t.title}</td>
+                            <td>${teacher}</td>
+                            <td>${t.date}</td>
+                            <td>${statusMap[t.status]}</td>
+                            <td><button class="btn btn-sm btn-outline-danger" onclick="System.tasks.delete(${t.id})"><i class="fas fa-times"></i></button></td>
+                        </tr>`;
+                    });
+                    if(myTasks.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لم تقم بإسناد تكليفات بعد.</td></tr>';
+                },
+                delete: function(id) {
+                    if(confirm('حذف التكليف؟')) {
+                        System.data.tasks = System.data.tasks.filter(t => t.id !== id);
+                        System.save();
+                        this.renderAssignList();
+                        if(document.getElementById('view-tasks-list') && !document.getElementById('view-tasks-list').classList.contains('hidden')) {
+                            this.renderList();
+                        }
+                    }
+                },
+                initList: function() {
+                    System.utils.populateSchools('task-list-school');
+                    this.updateListFilters();
+                },
+                updateListFilters: function() {
+                    const sel = document.getElementById('task-list-teacher');
+                    if (!sel) return;
+                    sel.innerHTML = '<option value="all">جميع المعلمين</option>';
+                    const filterSchool = document.getElementById('task-list-school').value;
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if(filterSchool !== 'all' && t.schoolId != filterSchool) return;
+                        sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                    });
+                    this.renderList();
+                },
+                renderList: function() {
+                    const tbody = document.querySelector('#tasks-list-table tbody');
+                    if(!tbody) return;
+                    tbody.innerHTML = '';
+                    
+                    const filterSchool = document.getElementById('task-list-school').value;
+                    const filterTeacher = document.getElementById('task-list-teacher').value;
+                    const filterStatus = document.getElementById('task-list-status').value;
+                    
+                    const statusMap = { 'pending': '<span class="badge bg-warning text-dark">قيد الانتظار</span>', 'done': '<span class="badge bg-success">تم التنفيذ</span>', 'not_done': '<span class="badge bg-danger">لم يتم التنفيذ</span>' };
+                    
+                    let hasData = false;
+                    (System.data.tasks || []).slice().reverse().forEach(t => {
+                        const teacher = System.data.users.find(u => u.id === t.teacherId);
+                        if(!teacher) return;
+                        
+                        if(filterSchool !== 'all' && teacher.schoolId != filterSchool) return;
+                        if(filterTeacher !== 'all' && t.teacherId != filterTeacher) return;
+                        if(filterStatus !== 'all' && t.status !== filterStatus) return;
+                        
+                        const creator = System.data.users.find(u => u.id === t.creatorId)?.name || '-';
+                        
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold">${t.title}<br><small class="text-muted">${t.details}</small></td>
+                            <td class="fw-bold text-primary">${teacher.name}</td>
+                            <td class="small">${creator}</td>
+                            <td>${t.date}</td>
+                            <td>${statusMap[t.status]}</td>
+                            <td class="small text-start" style="white-space: pre-wrap;">${t.notes || '-'}</td>
+                            <td><button class="btn btn-sm btn-primary shadow-sm" onclick="System.tasks.openStatusModal(${t.id})"><i class="fas fa-edit"></i> تحديث</button></td>
+                        </tr>`;
+                        hasData = true;
+                    });
+                    if(!hasData) tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">لا توجد تكليفات مطابقة للبحث.</td></tr>';
+                },
+                openStatusModal: function(id) {
+                    const t = System.data.tasks.find(x => x.id === id);
+                    if(!t) return;
+                    document.getElementById('task-status-id').value = t.id;
+                    document.getElementById('task-status-select').value = t.status === 'pending' ? 'done' : t.status;
+                    document.getElementById('task-status-notes').value = t.notes || '';
+                    new bootstrap.Modal(document.getElementById('taskStatusModal')).show();
+                },
+                saveStatus: function() {
+                    const id = parseInt(document.getElementById('task-status-id').value);
+                    const status = document.getElementById('task-status-select').value;
+                    const notes = document.getElementById('task-status-notes').value;
+                    
+                    const t = System.data.tasks.find(x => x.id === id);
+                    if(t) {
+                        t.status = status;
+                        t.notes = notes;
+                        System.save();
+                        
+                        const modalEl = document.getElementById('taskStatusModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if(modal) modal.hide();
+                        
+                        this.renderList();
+                        if(document.getElementById('view-tasks-assign') && !document.getElementById('view-tasks-assign').classList.contains('hidden')) {
+                            this.renderAssignList();
+                        }
+                    }
+                }
+            },
+
+            meetings: {
+                init: function() {
+                    const dateInput = document.getElementById('meet-date');
+                    dateInput.valueAsDate = new Date();
+                    
+                    const timeInput = document.getElementById('meet-time');
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    timeInput.value = `${hours}:${minutes}`;
+
+                    this.updateDayName(dateInput.value);
+                    dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
+
+                    this.renderMembersSelect();
+                    this.renderList();
+                },
+                updateDayName: function(dateStr) {
+                    if(!dateStr) return;
+                    const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+                    const d = new Date(dateStr);
+                    document.getElementById('meet-day').value = days[d.getDay()];
+                },
+                renderMembersSelect: function() {
+                    const container = document.getElementById('meet-members-container');
+                    container.innerHTML = '';
+                    const user = System.currentUser;
+                    
+                    let teachers = System.data.users.filter(u => u.role === 'teacher');
+                    if (!['admin', 'supervisor', 'manager'].includes(user.role)) {
+                        teachers = teachers.filter(t => t.schoolId === user.schoolId);
+                    }
+
+                    if(teachers.length === 0) {
+                        container.innerHTML = '<span class="text-muted">لا يوجد معلمين مسجلين.</span>';
+                        return;
+                    }
+
+                    teachers.forEach(t => {
+                        container.innerHTML += `
+                            <div class="form-check border p-2 rounded bg-white shadow-sm">
+                                <input class="form-check-input meet-member-check" type="checkbox" value="${t.id}" id="meet_mem_${t.id}">
+                                <label class="form-check-label cursor-pointer fw-bold" for="meet_mem_${t.id}">${t.name}</label>
+                            </div>
+                        `;
+                    });
+                },
+                selectAllMembers: function() {
+                    const checks = document.querySelectorAll('.meet-member-check');
+                    let allChecked = true;
+                    checks.forEach(c => { if(!c.checked) allChecked = false; });
+                    checks.forEach(c => c.checked = !allChecked);
+                },
+                add: async function() {
+                    const title = document.getElementById('meet-title').value.trim();
+                    const date = document.getElementById('meet-date').value;
+                    const time = document.getElementById('meet-time').value;
+                    const day = document.getElementById('meet-day').value;
+                    const minutes = document.getElementById('meet-minutes').value.trim();
+                    const recommendations = document.getElementById('meet-recommendations').value.trim();
+                    const evidenceInput = document.getElementById('meet-evidence');
+                    
+                    const selectedMembers = [];
+                    document.querySelectorAll('.meet-member-check:checked').forEach(cb => {
+                        selectedMembers.push({ teacherId: parseInt(cb.value), present: true });
+                    });
+
+                    if(!title || !date || selectedMembers.length === 0) {
+                        return System.utils.showAlert('الرجاء كتابة عنوان الاجتماع وتحديد التاريخ واختيار عضو واحد على الأقل.');
+                    }
+
+                    // Process images
+                    let evidencesBase64 = [];
+                    if(evidenceInput.files && evidenceInput.files.length > 0) {
+                        System.utils.showAlert("جاري معالجة الصور... يرجى الانتظار");
+                        for(let i=0; i<evidenceInput.files.length; i++) {
+                            const file = evidenceInput.files[i];
+                            if(file.size > 3000000) {
+                                System.utils.showAlert(`حجم الصورة ${file.name} كبير جداً، سيتم تخطيها.`);
+                                continue;
+                            }
+                            try {
+                                const b64 = await System.utils.fileToBase64Compressed(file, 800, 800, 0.6);
+                                evidencesBase64.push(b64);
+                            } catch(e) {
+                                console.error(e);
+                            }
+                        }
+                    }
+
+                    const newMeeting = {
+                        id: Date.now(),
+                        creatorId: System.currentUser.id,
+                        schoolId: System.currentUser.schoolId,
+                        title: title,
+                        date: date,
+                        time: time,
+                        day: day,
+                        minutes: minutes,
+                        recommendations: recommendations,
+                        members: selectedMembers,
+                        evidences: evidencesBase64
+                    };
+
+                    System.data.meetings.push(newMeeting);
+                    System.save();
+                    System.utils.showAlert('تم حفظ الاجتماع المهني بنجاح.');
+                    
+                    // Reset Form
+                    document.getElementById('meet-title').value = '';
+                    document.getElementById('meet-minutes').value = '';
+                    document.getElementById('meet-recommendations').value = '';
+                    document.getElementById('meet-evidence').value = '';
+                    document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
+                    
+                    this.renderList();
+                },
+                renderList: function() {
+                    const tbody = document.querySelector('#meetings-table tbody');
+                    tbody.innerHTML = '';
+                    const user = System.currentUser;
+
+                    let myMeetings = [...System.data.meetings].reverse();
+                    if(!['admin', 'supervisor', 'manager'].includes(user.role)) {
+                        myMeetings = myMeetings.filter(m => m.schoolId === user.schoolId);
+                    }
+
+                    if(myMeetings.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-muted">لا توجد اجتماعات مهنية مسجلة.</td></tr>';
+                        return;
+                    }
+
+                    myMeetings.forEach(m => {
+                        const membersCount = m.members.length;
+                        const presentCount = m.members.filter(mem => mem.present).length;
+                        const percentage = membersCount > 0 ? Math.round((presentCount / membersCount) * 100) : 0;
+                        const allowEdit = user.role === 'admin' || m.creatorId === user.id;
+                        const timeStr = m.time ? m.time : '';
+
+                        tbody.innerHTML += `<tr>
+                            <td class="fw-bold text-success cursor-pointer text-decoration-underline" onclick="System.meetings.openDetails(${m.id})"><u><i class="fas fa-file-alt ms-1 text-secondary"></i>${m.title}</u></td>
+                            <td><span class="badge bg-light text-dark border">${m.date} - ${timeStr}</span></td>
+                            <td>${membersCount}</td>
+                            <td><span class="badge bg-${percentage >= 80 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}">${percentage}%</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info text-white shadow-sm" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
+                                ${allowEdit ? `<button class="btn btn-sm btn-outline-danger shadow-sm ms-1" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
+                            </td>
+                        </tr>`;
+                    });
+                },
+                openDetails: function(id) {
+                    const m = System.data.meetings.find(x => x.id === id);
+                    if(!m) return;
+                    
+                    document.getElementById('manage-meet-id').value = m.id;
+                    document.getElementById('manage-meet-title').innerText = m.title;
+                    document.getElementById('manage-meet-date').innerText = `${m.date} (${m.day})`;
+                    document.getElementById('manage-meet-time').innerText = m.time || 'غير محدد';
+                    document.getElementById('manage-meet-minutes').innerText = m.minutes || 'لا يوجد محضر مسجل.';
+                    document.getElementById('manage-meet-rec').innerText = m.recommendations || 'لا توجد توصيات.';
+
+                    const attTbody = document.querySelector('#meet-attendance-table tbody');
+                    attTbody.innerHTML = '';
+                    
+                    m.members.forEach(mem => {
+                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
+                        const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
+                        const text = mem.present ? 'حاضر' : 'غائب';
+                        const icon = mem.present ? 'fa-check' : 'fa-times';
+                        
+                        attTbody.innerHTML += `<tr>
+                            <td class="fw-bold">${tName}</td>
+                            <td>
+                                <span class="badge ${badgeClass} fs-6 attendance-toggle shadow-sm" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
+                                    <i class="fas ${icon} ms-1"></i>${text}
+                                </span>
+                            </td>
+                        </tr>`;
+                    });
+
+                    const evContainer = document.getElementById('manage-meet-evidences-container');
+                    evContainer.innerHTML = '';
+                    if(m.evidences && m.evidences.length > 0) {
+                        m.evidences.forEach(evB64 => {
+                            const img = document.createElement('img');
+                            img.src = evB64;
+                            img.className = 'evidence-img-thumb';
+                            img.onclick = () => {
+                                document.getElementById('preview-image-elem').src = evB64;
+                                document.getElementById('download-image-btn').href = evB64;
+                                new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                            };
+                            evContainer.appendChild(img);
+                        });
+                    } else {
+                        evContainer.innerHTML = '<span class="text-muted small">لا توجد صور أو شواهد مرفقة.</span>';
+                    }
+
+                    new bootstrap.Modal(document.getElementById('meetingDetailsModal')).show();
+                },
+                toggleAttendance: function(meetId, teacherId) {
+                    const m = System.data.meetings.find(x => x.id === meetId);
+                    if(!m) return;
+                    
+                    if(System.currentUser.role !== 'admin' && m.creatorId !== System.currentUser.id) {
+                        return System.utils.showAlert('لا تملك صلاحية تعديل الحضور لهذا الاجتماع.');
+                    }
+
+                    const mem = m.members.find(x => x.teacherId === teacherId);
+                    if(mem) {
+                        mem.present = !mem.present;
+                        System.save();
+                        this.openDetails(meetId);
+                        this.renderList();
+                    }
+                },
+                deleteMeeting: function(id) {
+                    if(confirm('هل أنت متأكد من حذف هذا الاجتماع نهائياً؟')) {
+                        System.data.meetings = System.data.meetings.filter(m => m.id !== id);
+                        System.save();
+                        this.renderList();
+                    }
+                },
+                printMeeting: function() {
+                    const id = parseInt(document.getElementById('manage-meet-id').value);
+                    const m = System.data.meetings.find(x => x.id === id);
+                    if(!m) return;
+
+                    let presentList = [];
+                    let absentList = [];
+                    m.members.forEach(mem => {
+                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'غير معروف';
+                        if(mem.present) presentList.push(tName);
+                        else absentList.push(tName);
+                    });
+
+                    const creatorName = System.data.users.find(u => u.id === m.creatorId)?.name || 'الإدارة';
+
+                    // Prepare Evidence Images block for printing
+                    let evidenceHtml = '';
+                    if(m.evidences && m.evidences.length > 0) {
+                        evidenceHtml = `
+                            <div style="margin-top: 30px; page-break-inside: avoid;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">الشواهد والمرفقات:</h5>
+                                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
+                                    ${m.evidences.map(img => `<img src="${img}" style="max-width: 45%; max-height: 250px; border: 1px solid #ccc; padding: 5px; border-radius: 5px;">`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    const content = `
+                        <div style="text-align: right; direction: rtl; font-family: 'Tajawal', sans-serif;">
+                            ${System.utils.getPrintHeader('محضر اجتماع تنمية مهنية')}
+                            
+                            <table class="print-table">
+                                <tr>
+                                    <th style="width: 20%;">عنوان الاجتماع</th>
+                                    <td colspan="3"><strong style="font-size: 1.2rem;">${m.title}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th style="width: 20%;">اليوم والتاريخ</th>
+                                    <td>${m.day}، ${m.date}</td>
+                                    <th style="width: 20%;">الوقت</th>
+                                    <td>${m.time || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>رئيس الاجتماع</th>
+                                    <td colspan="3">${creatorName}</td>
+                                </tr>
+                            </table>
+
+                            <div style="margin-bottom: 25px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">محضر ونقاط الاجتماع:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.minutes || 'لا توجد بيانات.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">التوصيات:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.recommendations || 'لا توجد توصيات.'}</div>
+                            </div>
+
+                            <div style="page-break-inside: avoid;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">سجل الحضور والغياب:</h5>
+                                <div style="display: flex; gap: 20px;">
+                                    <div style="flex: 1;">
+                                        <div style="background: #e8f5e9 !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #c8e6c9;">الحاضرون (${presentList.length})</div>
+                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
+                                            ${presentList.length > 0 ? presentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
+                                        </ul>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="background: #ffebee !important; padding: 8px; text-align: center; font-weight: bold; border: 1px solid #ffcdd2;">الغائبون (${absentList.length})</div>
+                                        <ul style="list-style-type: none; padding: 0; margin: 0; border: 1px solid #dee2e6; border-top: none;">
+                                            ${absentList.length > 0 ? absentList.map(n => `<li style="padding: 10px; border-bottom: 1px solid #eee; color: #d32f2f;">${n}</li>`).join('') : '<li style="padding: 10px; text-align: center; color: #666;">لا يوجد</li>'}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${evidenceHtml}
+
+                            <div style="margin-top: 60px; display: flex; justify-content: space-between; page-break-inside: avoid;">
+                                <div style="text-align: center; width: 45%;">
+                                    <strong>الاعتماد (رئيس الاجتماع)</strong>
+                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
+                                </div>
+                                <div style="text-align: center; width: 45%;">
+                                    <strong>اعتماد مدير المدرسة</strong>
+                                    <div style="margin-top: 30px; border-bottom: 1px dashed #000;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('print-area-container').innerHTML = content;
+                    document.body.classList.add('printing-special');
+                    window.print();
+                    document.body.classList.remove('printing-special');
+                }
+            },
+
+            teacherFile: { 
+                init: function() { 
+                    System.utils.populateSchools('file-school-select');
+                    this.updateTeachers();
+                }, 
+                updateTeachers: function() {
+                    const sel = document.getElementById('file-teacher-select');
+                    sel.innerHTML = '<option value="">اختر المعلم...</option>';
+                    const filterSchool = document.getElementById('file-school-select').value;
+                    const isCoord = System.currentUser.role === 'coordinator';
+                    const mySchool = System.currentUser.schoolId;
+
+                    System.data.users.filter(u => u.role === 'teacher').forEach(t => {
+                        if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
+                            if(filterSchool !== 'all' && filterSchool && t.schoolId != filterSchool) return;
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        } else if (!isCoord || (isCoord && t.schoolId === mySchool)) {
+                            sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
+                        }
+                    });
+                },
+                render: function() { 
+                    const tid = parseInt(document.getElementById('file-teacher-select').value); 
+                    if(!tid) return document.getElementById('teacher-file-content').classList.add('hidden'); 
+                    document.getElementById('teacher-file-content').classList.remove('hidden'); 
+                    
+                    const t = System.data.users.find(u => u.id === tid); 
+                    const schoolName = System.data.schools.find(s=>s.id === t.schoolId)?.name || '-'; 
+                    document.getElementById('tf-name').innerText = t.name; 
+                    document.getElementById('tf-school').innerText = schoolName; 
+                    
+                    const praise = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'praise'); 
+                    const notes = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'note'); 
+                    const verbal = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'verbal_warning'); 
+                    const written = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'written_warning'); 
+                    const violations = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'violation'); 
+                    
+                    const gapsTable = document.querySelector('#table-gaps tbody'); 
+                    gapsTable.innerHTML = ''; 
+                    let gapVisitsCount = 0; 
+                    const distinctVisits = []; 
+                    
+                    System.data.evaluations.filter(e => e.teacherId === tid).forEach(e => { 
+                        const key = `${e.weekId}_${e.classId}`; 
+                        if(!distinctVisits.includes(key)) distinctVisits.push(key); 
+                    }); 
+                    
+                    distinctVisits.forEach(key => { 
+                        const [wid, cid] = key.split('_'); 
+                        const weekName = System.data.weeks.find(w => w.id == wid)?.name || '-'; 
+                        const evals = System.data.evaluations.filter(e => e.teacherId === tid && e.weekId == wid && e.classId == cid); 
+                        if(evals.length > 0) { 
+                            const date = evals[0].date; 
+                            let className = ''; 
+                            System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => { 
+                                if(c.id === cid) className = `${c.name}`; 
+                            })))); 
+                            const assign = System.data.assignments.find(a => a.teacherId === tid && a.classId === cid); 
+                            const subName = assign ? System.utils.getSubjectName(assign.subjectId) : '-'; 
+                            const presentIds = evals.map(e => e.criteriaId); 
+                            const missingCriteria = System.data.criteria.filter(c => !presentIds.includes(c.id)); 
+                            const missingNames = missingCriteria.map(c => c.name); 
+                            const missingCount = missingCriteria.length; 
+                            
+                            if(missingCount > 0) { 
+                                gapVisitsCount++; 
+                                const performance = Math.round((presentIds.length / System.data.criteria.length) * 100); 
+                                gapsTable.innerHTML += `<tr><td>${className}</td><td>${weekName}</td><td>${subName}</td><td>${date}</td><td class="text-danger fw-bold text-center">${missingCount}</td><td class="small text-muted">${missingNames.join(' ، ')}</td><td><span class="badge bg-${performance < 50 ? 'danger' : 'warning'}">${performance}%</span></td></tr>`; 
+                            } 
+                        } 
+                    }); 
+                    
+                    const visitsTbody = document.querySelector('#table-visits tbody');
+                    visitsTbody.innerHTML = '';
+                    const teacherVisits = (System.data.visits || []).filter(v => v.teacherId === tid).sort((a,b) => new Date(a.date) - new Date(b.date));
+                    let totalPercent = 0;
+                    
+                    if(teacherVisits.length === 0) {
+                        visitsTbody.innerHTML = '<tr><td colspan="8" class="text-muted">لا توجد زيارات مسجلة لهذا المعلم</td></tr>';
+                    } else {
+                        teacherVisits.forEach((v, idx) => {
+                            totalPercent += v.percentage;
+                            const weekName = System.data.weeks.find(w => w.id == v.weekId)?.name || '-';
+                            let className = '';
+                            System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => { if(c.id === v.classId) className = c.name; }))));
+                            
+                            const color = v.percentage < 60 ? 'danger' : (v.percentage < 85 ? 'warning' : 'success');
+                            visitsTbody.innerHTML += `<tr>
+                                <td>${idx + 1}</td>
+                                <td>${v.date}</td>
+                                <td>${weekName}</td>
+                                <td>${v.lessonTitle}</td>
+                                <td>${className}</td>
+                                <td>${v.visitorName}</td>
+                                <td class="fw-bold text-${color}">${v.percentage}%</td>
+                                <td class="small text-start">${v.notes || '-'}</td>
+                            </tr>`;
+                        });
+                    }
+                    const generalAvg = teacherVisits.length > 0 ? Math.round(totalPercent / teacherVisits.length) : 0;
+                    document.getElementById('tf-visits-average').innerText = `${generalAvg}%`;
+
+                    const role = System.currentUser.role;
+                    const resTabBtn = document.getElementById('tab-btn-results');
+                    if (role === 'admin' || role === 'supervisor') {
+                        resTabBtn.parentElement.style.display = 'block';
+                        
+                        const table = document.getElementById('table-tf-results');
+                        table.querySelector('thead').innerHTML = `
+                            <tr>
+                                <th rowspan="2" class="align-middle">الصف والفصل</th>
+                                <th colspan="3" class="table-primary border-primary">الفصل الدراسي الأول</th>
+                                <th colspan="3" class="table-success border-success">الفصل الدراسي الثاني</th>
+                                <th rowspan="2" class="align-middle bg-warning text-dark">المتوسط العام</th>
+                            </tr>
+                            <tr>
+                                <th class="table-primary border-primary">الفترة الأولى</th><th class="table-primary border-primary">الفترة الثانية</th><th class="table-primary border-primary">نهاية الفصل</th>
+                                <th class="table-success border-success">الفترة الأولى</th><th class="table-success border-success">الفترة الثانية</th><th class="table-success border-success">نهاية الفصل</th>
+                            </tr>
+                        `;
+                        const resTbody = table.querySelector('tbody');
+                        const assignments = System.data.assignments.filter(a => a.teacherId === tid);
+                        resTbody.innerHTML = '';
+                        
+                        if(assignments.length === 0) {
+                            resTbody.innerHTML = `<tr><td colspan="8" class="text-muted text-center">لا توجد فصول مسندة للمعلم</td></tr>`;
+                        } else {
+                            assignments.forEach(a => {
+                                let className = '';
+                                System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
+                                    if(c.id === a.classId) className = `${g.name} - ${c.name}`;
+                                }))));
+
+                                const res = System.data.teacherResults.filter(r => r.teacherId === tid && r.classId === a.classId);
+                                const getVal = (sem, type) => { const rec = res.find(r => r.semester === sem && r.examType === type); return rec ? rec.percentage : null; };
+
+                                const vals = [ getVal("1", "p1"), getVal("1", "p2"), getVal("1", "end"), getVal("2", "p1"), getVal("2", "p2"), getVal("2", "end") ];
+                                let total = 0, count = 0;
+                                vals.forEach(v => { if(v !== null) { total += v; count++; } });
+                                const avg = count > 0 ? Math.round(total / count) : '-';
+                                resTbody.innerHTML += `<tr>
+                                    <td class="fw-bold">${className}</td>
+                                    <td>${vals[0]!==null ? vals[0]+'%' : '-'}</td>
+                                    <td>${vals[1]!==null ? vals[1]+'%' : '-'}</td>
+                                    <td class="fw-bold">${vals[2]!==null ? vals[2]+'%' : '-'}</td>
+                                    <td>${vals[3]!==null ? vals[3]+'%' : '-'}</td>
+                                    <td>${vals[4]!==null ? vals[4]+'%' : '-'}</td>
+                                    <td class="fw-bold">${vals[5]!==null ? vals[5]+'%' : '-'}</td>
+                                    <td class="fw-bold text-${avg !== '-' ? (avg < 60 ? 'danger' : (avg < 85 ? 'warning' : 'success')) : 'muted'} bg-light">${avg !== '-' ? avg+'%' : '-'}</td>
+                                </tr>`;
+                            });
+                        }
+                    } else {
+                        resTabBtn.parentElement.style.display = 'none';
+                    }
+
+                    document.getElementById('tf-praise-count').innerText = praise.length; 
+                    document.getElementById('tf-note-count').innerText = notes.length; 
+                    document.getElementById('tf-verbal-count').innerText = verbal.length; 
+                    document.getElementById('tf-written-count').innerText = written.length; 
+                    document.getElementById('tf-violation-count').innerText = violations.length; 
+                    document.getElementById('tf-gaps-count').innerText = gapVisitsCount; 
+                    
+                    const fillTable = (id, data, hasImage) => { 
+                        const tbody = document.querySelector(`#${id} tbody`); tbody.innerHTML = ''; 
+                        data.forEach(item => { 
+                            const imgHtml = hasImage && item.image ? `<img src="${item.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${item.image}')">` : '-';
+                            tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.situation}</td><td>${item.action}</td><td>${imgHtml}</td></tr>`; 
+                        }); 
+                        if(data.length===0) tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">لا يوجد سجل</td></tr>`; 
+                    }; 
+                    
+                    fillTable('table-praise', praise, true); 
+                    fillTable('table-notes', notes, true); 
+                    fillTable('table-verbal', verbal, true); 
+                    fillTable('table-written', written, true); 
+                    fillTable('table-violations', violations, true);
                 }
             }
         };
