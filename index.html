@@ -103,10 +103,9 @@
             .main-content { margin-right: 0 !important; padding: 0 !important; width: 100% !important; background-color: white !important;}
             .section-card { box-shadow: none !important; border: 0 !important; page-break-inside: avoid; padding: 0 !important;}
             
-            /* Logic for specialized prints */
-            body.printing-special * { visibility: hidden; }
-            body.printing-special #print-area-container, body.printing-special #print-area-container * { visibility: visible; }
-            body.printing-special #print-area-container { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            /* Logic for specialized prints (تم إصلاح الشاشة البيضاء) */
+            body.printing-special > *:not(#print-area-container) { display: none !important; }
+            body.printing-special #print-area-container { display: block !important; width: 100%; margin: 0; padding: 0; position: relative; }
             
             /* Print tables forcing borders and colors */
             .print-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
@@ -348,8 +347,8 @@
             <h4 class="text-secondary" id="page-header-title"></h4>
             <div>
                  <span class="badge bg-light text-dark border me-2"><i class="fas fa-user ms-1"></i> <span id="top-bar-user"></span></span>
-                <!-- تم تحديث زر الطباعة ليعمل بشكل سليم -->
-                <button onclick="System.utils.printScreen()" class="btn btn-secondary btn-sm"><i class="fas fa-print ms-2"></i>طباعة الشاشة</button>
+                <!-- تم تحديث زر الطباعة ليعمل بشكل سليم لسحب المحتوى وتنسيقه -->
+                <button onclick="System.utils.printCurrentView()" class="btn btn-secondary btn-sm"><i class="fas fa-print ms-2"></i>طباعة التقرير</button>
             </div>
         </div>
 
@@ -801,24 +800,36 @@
         <div id="view-meetings" class="view-section hidden">
             <h3 class="mb-4 text-success"><i class="fas fa-users-cog ms-2"></i>اجتماعات التنمية المهنية</h3>
             <div class="section-card border-top border-5 border-success no-print">
-                <h5 class="mb-3">إنشاء اجتماع جديد</h5>
+                <h5 class="mb-3" id="meet-form-title">إنشاء اجتماع جديد</h5>
+                <input type="hidden" id="meet-edit-id" value="">
                 <div class="row g-3">
                     <div class="col-md-6"><label class="small fw-bold">عنوان الاجتماع</label><input type="text" id="meet-title" class="form-control" placeholder="مثال: ورشة عمل حول استراتيجيات التعلم"></div>
                     <div class="col-md-3"><label class="small fw-bold">تاريخ الاجتماع</label><input type="date" id="meet-date" class="form-control"></div>
                     <div class="col-md-3"><label class="small fw-bold">الوقت</label><input type="time" id="meet-time" class="form-control"></div>
                     
                     <div class="col-md-6"><label class="small fw-bold">اليوم</label><input type="text" id="meet-day" class="form-control" placeholder="مثال: الأحد" readonly></div>
-                    <div class="col-md-6"><label class="small fw-bold">الشواهد والمرفقات (صور)</label><input type="file" id="meet-evidence" accept="image/*" class="form-control" multiple></div>
+                    <div class="col-md-6">
+                        <label class="small fw-bold">الشواهد والمرفقات (صور)</label>
+                        <input type="file" id="meet-evidence" accept="image/*" class="form-control" multiple>
+                        <div id="meet-edit-images-container" class="d-flex flex-wrap gap-2 mt-2"></div>
+                    </div>
                     
                     <div class="col-12">
                         <label class="small fw-bold mb-2">أعضاء الاجتماع (المعلمين المستهدفين): <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="System.meetings.selectAllMembers()">تحديد الكل</button></label>
                         <div id="meet-members-container" class="p-3 border rounded bg-light" style="max-height: 150px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px;"></div>
                     </div>
 
+                    <div class="col-md-12"><label class="small fw-bold">أهداف الاجتماع</label><textarea id="meet-objectives" class="form-control" rows="2" placeholder="اكتب أهداف الاجتماع المستهدفة..."></textarea></div>
+                    <div class="col-md-12"><label class="small fw-bold">جدول الأعمال</label><textarea id="meet-agenda" class="form-control" rows="2" placeholder="اكتب جدول أعمال الاجتماع..."></textarea></div>
                     <div class="col-md-6"><label class="small fw-bold">محضر الاجتماع (النقاط التي نوقشت)</label><textarea id="meet-minutes" class="form-control" rows="4" placeholder="اكتب مجريات الاجتماع..."></textarea></div>
                     <div class="col-md-6"><label class="small fw-bold">التوصيات</label><textarea id="meet-recommendations" class="form-control" rows="4" placeholder="اكتب التوصيات الصادرة..."></textarea></div>
+                    <div class="col-md-8"><label class="small fw-bold">الخطوات التالية</label><textarea id="meet-next-steps" class="form-control" rows="2" placeholder="ما هي المهام أو الخطوات القادمة؟..."></textarea></div>
+                    <div class="col-md-4"><label class="small fw-bold">موعد الاجتماع التالي (اختياري)</label><input type="date" id="meet-next-date" class="form-control"></div>
                     
-                    <div class="col-12 mt-3"><button onclick="System.meetings.add()" class="btn btn-success w-100 fw-bold"><i class="fas fa-save ms-2"></i>حفظ الاجتماع</button></div>
+                    <div class="col-12 mt-3 d-flex gap-2">
+                        <button id="btn-save-meet" onclick="System.meetings.save()" class="btn btn-success flex-grow-1 fw-bold"><i class="fas fa-save ms-2"></i>حفظ الاجتماع</button>
+                        <button id="btn-cancel-meet" onclick="System.meetings.resetForm()" class="btn btn-secondary hidden fw-bold">إلغاء التعديل</button>
+                    </div>
                 </div>
             </div>
 
@@ -860,45 +871,63 @@
         </div>
 
         <div id="view-teacher-file" class="view-section hidden">
-            <h3 class="mb-4 text-primary">ملف المعلم</h3>
-            <div class="row mb-3 no-print">
-                <div class="col-md-3 admin-only"><select id="file-school-select" class="form-select" onchange="System.teacherFile.updateTeachers()"></select></div>
-                <div class="col-md-6"><select id="file-teacher-select" class="form-select" onchange="System.teacherFile.render()"><option value="">اختر المعلم...</option></select></div>
-            </div>
-            <div id="teacher-file-content" class="hidden">
-                <div class="section-card border-top border-5 border-primary">
-                    <div class="d-flex justify-content-between"><h4 id="tf-name">الاسم</h4><span id="tf-school" class="badge bg-secondary">المدرسة</span></div>
-                    <div class="row mt-4 text-center">
-                        <div class="col-md-2"><div class="card bg-success text-white p-2"><h4 id="tf-praise-count">0</h4><small>ثناء</small></div></div>
-                        <div class="col-md-2"><div class="card bg-info text-white p-2"><h4 id="tf-note-count">0</h4><small>ملاحظات</small></div></div>
-                        <div class="col-md-2"><div class="card bg-secondary text-white p-2"><h4 id="tf-verbal-count">0</h4><small>ت. شفهي</small></div></div>
-                        <div class="col-md-2"><div class="card bg-dark text-white p-2"><h4 id="tf-written-count">0</h4><small>ت. كتابي</small></div></div>
-                        <div class="col-md-2"><div class="card bg-danger text-white p-2"><h4 id="tf-violation-count">0</h4><small>مخالفات</small></div></div>
-                        <div class="col-md-2"><div class="card bg-warning text-dark p-2"><h4 id="tf-gaps-count">0</h4><small>نواقص</small></div></div>
+            <h3 class="mb-4 text-primary"><i class="fas fa-id-card ms-2"></i>ملف المعلم</h3>
+            
+            <div class="section-card no-print">
+                <div class="row g-2 align-items-end bg-light p-3 rounded border">
+                    <div class="col-md-4 admin-only">
+                        <label class="small fw-bold">المدرسة</label>
+                        <select id="file-school-select" class="form-select form-select-sm" onchange="System.teacherFile.updateTeachers()"></select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="small fw-bold">المعلم</label>
+                        <select id="file-teacher-select" class="form-select form-select-sm" onchange="System.teacherFile.render()"></select>
                     </div>
                 </div>
+            </div>
+
+            <div id="teacher-file-content" class="hidden">
+                <div class="section-card text-center bg-primary text-white mb-4">
+                    <h4 id="tf-name" class="fw-bold mb-1">اسم المعلم</h4>
+                    <p id="tf-school" class="mb-0 opacity-75">المدرسة</p>
+                </div>
+
+                <div class="row mb-4 text-center g-3">
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-visits-average" class="text-primary mb-1">0%</h3><small class="text-muted">متوسط الزيارات</small></div></div>
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-gaps-count" class="text-danger mb-1">0</h3><small class="text-muted">زيارات بها نواقص</small></div></div>
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-praise-count" class="text-success mb-1">0</h3><small class="text-muted">شكر وثناء</small></div></div>
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-note-count" class="text-info mb-1">0</h3><small class="text-muted">ملاحظات</small></div></div>
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-verbal-count" class="text-secondary mb-1">0</h3><small class="text-muted">تنبيه شفهي</small></div></div>
+                    <div class="col-md-2"><div class="p-3 border rounded bg-white shadow-sm"><h3 id="tf-written-count" class="text-dark mb-1">0</h3><small class="text-muted">تنبيه كتابي</small></div></div>
+                    <div class="col-md-12 mt-2"><div class="p-3 border border-danger rounded bg-danger text-white shadow-sm w-25 mx-auto"><h3 id="tf-violation-count" class="mb-1">0</h3><small>مخالفات</small></div></div>
+                </div>
+
                 <div class="section-card">
-                    <ul class="nav nav-tabs mb-3" id="teacherFileTabs" role="tablist">
-                        <li class="nav-item"><button class="nav-link active text-danger" data-bs-toggle="tab" data-bs-target="#tab-gaps" type="button">النواقص</button></li>
-                        <li class="nav-item"><button class="nav-link text-primary fw-bold" data-bs-toggle="tab" data-bs-target="#tab-visits" type="button">الزيارات</button></li> 
-                        <li class="nav-item admin-super-only" style="display: none;"><button class="nav-link text-purple fw-bold" data-bs-toggle="tab" data-bs-target="#tab-results" type="button" id="tab-btn-results">نتائج المعلم</button></li>
-                        <li class="nav-item"><button class="nav-link text-success" data-bs-toggle="tab" data-bs-target="#tab-positive" type="button">التميز</button></li>
-                        <li class="nav-item"><button class="nav-link text-info" data-bs-toggle="tab" data-bs-target="#tab-notes" type="button">الملاحظات</button></li>
-                        <li class="nav-item"><button class="nav-link text-secondary" data-bs-toggle="tab" data-bs-target="#tab-verbal" type="button">تنبيه شفهي</button></li>
-                        <li class="nav-item"><button class="nav-link text-dark" data-bs-toggle="tab" data-bs-target="#tab-written" type="button">تنبيه كتابي</button></li>
-                        <li class="nav-item"><button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#tab-violations" type="button">المخالفات</button></li>
+                    <ul class="nav nav-tabs mb-3 no-print" role="tablist">
+                        <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-visits" type="button">سجل الزيارات</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tab-gaps" type="button">النواقص</button></li>
+                        <li class="nav-item admin-super-only"><button class="nav-link fw-bold" style="color: #6f42c1;" data-bs-toggle="tab" data-bs-target="#tab-results" type="button" id="tab-btn-results">نتائج المعلم</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-success" data-bs-toggle="tab" data-bs-target="#tab-positive" type="button">الشكر</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-info" data-bs-toggle="tab" data-bs-target="#tab-notes" type="button">الملاحظات</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-secondary" data-bs-toggle="tab" data-bs-target="#tab-verbal" type="button">شفهي</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-dark" data-bs-toggle="tab" data-bs-target="#tab-written" type="button">كتابي</button></li>
+                        <li class="nav-item"><button class="nav-link fw-bold text-danger" data-bs-toggle="tab" data-bs-target="#tab-violations" type="button">المخالفات</button></li>
                     </ul>
+                    
                     <div class="tab-content">
-                        <div class="tab-pane fade show active" id="tab-gaps" role="tabpanel"><div class="table-responsive"><table class="table table-bordered table-striped" id="table-gaps"><thead class="table-light"><tr><th>الفصل</th><th>الأسبوع</th><th>المادة</th><th>التاريخ</th><th>عدد النواقص</th><th>تفاصيل</th><th>الأداء %</th></tr></thead><tbody></tbody></table></div></div>
-                        
-                        <div class="tab-pane fade" id="tab-visits" role="tabpanel">
-                            <div class="alert alert-info d-flex justify-content-between align-items-center">
-                                <strong>متوسط نسبة الزيارات العامة:</strong>
-                                <span class="badge bg-primary fs-5" id="tf-visits-average">0%</span>
-                            </div>
+                        <div class="tab-pane fade show active" id="tab-visits" role="tabpanel">
                             <div class="table-responsive">
-                                <table class="table table-bordered table-hover text-center" id="table-visits">
-                                    <thead class="table-primary"><tr><th>م</th><th>التاريخ</th><th>الاسبوع</th><th>عنوان الدرس</th><th>الفصل</th><th>القائم بالزيارة</th><th>النسبة</th><th>الملاحظات</th></tr></thead>
+                                <table class="table table-bordered table-hover text-center align-middle" id="table-visits">
+                                    <thead class="table-light"><tr><th>#</th><th>التاريخ</th><th>الأسبوع</th><th>الدرس</th><th>الفصل</th><th>الزائر</th><th>النسبة</th><th>ملاحظات</th></tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="tab-gaps" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped text-center align-middle" id="table-gaps">
+                                    <thead class="table-danger"><tr><th>الفصل</th><th>الأسبوع</th><th>المادة</th><th>التاريخ</th><th>عدد النواقص</th><th>البنود الناقصة</th><th>نسبة التفعيل</th></tr></thead>
                                     <tbody></tbody>
                                 </table>
                             </div>
@@ -1315,7 +1344,7 @@
                     if(pwd === null) return;
                     if(pwd === System.currentUser.password) {
                         const adminUser = System.currentUser;
-                        const savedArchives = System.data.archives || []; // Preserve archives
+                        const savedArchives = System.data.archives || []; 
                         System.data = {
                             users: [adminUser],
                             schools: [], subjects: [], weeks: [],
@@ -1336,7 +1365,7 @@
                     if(!name.trim()) return System.utils.showAlert('الرجاء إدخال اسم أو وصف للأرشيف.');
                     
                     const snapshot = JSON.parse(JSON.stringify(System.data));
-                    snapshot.archives = []; // Prevent nested recursive archives
+                    snapshot.archives = []; 
                     
                     const archiveObj = {
                         id: Date.now(),
@@ -1431,24 +1460,92 @@
                         </div>
                     `;
                 },
-                printScreen: function() {
-                    window.print();
+                printCurrentView: function() {
+                    const activeView = document.querySelector('.view-section:not(.hidden)');
+                    if(!activeView) return window.print();
+
+                    const title = document.getElementById('page-header-title').innerText;
+                    const clone = activeView.cloneNode(true);
+                    
+                    // تحويل الرسوم البيانية لصور حتى تظهر في الطباعة
+                    const originalCanvases = activeView.querySelectorAll('canvas');
+                    const clonedCanvases = clone.querySelectorAll('canvas');
+                    originalCanvases.forEach((canvas, index) => {
+                        const img = document.createElement('img');
+                        img.src = canvas.toDataURL();
+                        img.style.maxWidth = '100%';
+                        clonedCanvases[index].parentNode.replaceChild(img, clonedCanvases[index]);
+                    });
+
+                    // إظهار القيم المحددة في القوائم المنسدلة
+                    const originalSelects = activeView.querySelectorAll('select');
+                    const clonedSelects = clone.querySelectorAll('select');
+                    originalSelects.forEach((select, index) => {
+                        const text = select.options[select.selectedIndex]?.text || '';
+                        const span = document.createElement('span');
+                        span.innerHTML = `<strong>${text}</strong>`;
+                        clonedSelects[index].parentNode.replaceChild(span, clonedSelects[index]);
+                    });
+
+                    clone.querySelectorAll('.no-print').forEach(el => el.remove());
+                    
+                    const html = `
+                        <div style="direction: rtl; text-align: right; font-family: 'Tajawal', sans-serif; padding: 20px;">
+                            <table style="width: 100%; border: none;">
+                                <thead style="display: table-header-group;">
+                                    <tr><td style="border: none; padding-bottom: 20px;">
+                                        ${this.getPrintHeader(title)}
+                                    </td></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td style="border: none;">
+                                        ${clone.innerHTML}
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    document.getElementById('print-area-container').innerHTML = html;
+                    document.body.classList.add('printing-special');
+                    setTimeout(() => {
+                        window.print();
+                        document.body.classList.remove('printing-special');
+                        document.getElementById('print-area-container').innerHTML = '';
+                    }, 300);
                 },
                 printAllNotifications: function() { 
                     if(System.data.notifications.length === 0) return System.utils.showAlert('لا توجد إشعارات'); 
-                    let html = `<div style="direction: rtl; text-align: right; padding: 20px; font-family: 'Tajawal', sans-serif;">`;
-                    html += this.getPrintHeader('سجل التواصل والإشعارات');
-                    html += `<table class="print-table"><thead><tr><th>التاريخ</th><th>المعلم</th><th>التفاصيل</th></tr></thead><tbody>`; 
+                    let html = `<div style="direction: rtl; text-align: right; font-family: 'Tajawal', sans-serif;">
+                        <table style="width: 100%; border: none;">
+                            <thead style="display: table-header-group;">
+                                <tr><td style="border: none; padding-bottom: 20px;">
+                                    ${this.getPrintHeader('سجل التواصل والإشعارات')}
+                                </td></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td style="border: none;">
+                                    <table class="print-table">
+                                        <thead style="background-color:#f8f9fa;"><tr><th>التاريخ</th><th>المعلم</th><th>التفاصيل</th></tr></thead>
+                                        <tbody>`; 
                     [...System.data.notifications].reverse().forEach(n => { 
                         const t = System.data.users.find(u => u.id === n.teacherId)?.name || 'غير معروف'; 
                         const fullText = n.details + (n.missing ? `<br><small><b>النواقص:</b> ${n.missing}</small>` : ''); 
                         html += `<tr><td>${n.date}</td><td>${t}</td><td>${fullText}</td></tr>`; 
                     }); 
-                    html += `</tbody></table></div>`; 
+                    html += `           </tbody>
+                                    </table>
+                                </td></tr>
+                            </tbody>
+                        </table>
+                    </div>`; 
                     document.getElementById('print-area-container').innerHTML = html; 
                     document.body.classList.add('printing-special'); 
-                    window.print(); 
-                    document.body.classList.remove('printing-special'); 
+                    setTimeout(() => {
+                        window.print(); 
+                        document.body.classList.remove('printing-special'); 
+                        document.getElementById('print-area-container').innerHTML = '';
+                    }, 100);
                 },
                 getSubjectName: function(id) { return System.data.subjects.find(s=>s.id == id)?.name || ''; },
                 populateSchools: function(selectId) {
@@ -1705,6 +1802,7 @@
                     });
                 },
                 renderStats: function() { const container = document.getElementById('general-stats-row'); const createCard = (title, val, color, icon) => `<div class="col-md-3"><div class="stat-card bg-${color}"><h3>${val}</h3><p>${title}</p><i class="fas ${icon}"></i></div></div>`; let html = ''; if (System.currentUser.role === 'admin') { html += createCard('المدارس', System.data.schools.length, 'primary', 'fa-school'); html += createCard('المستخدمين', System.data.users.length, 'success', 'fa-users'); } html += createCard('التسكينات', System.data.assignments.length, 'warning', 'fa-link'); html += createCard('الإشعارات', System.data.notifications.length, 'danger', 'fa-bell'); container.innerHTML = html; },
+                
                 renderMonitoringStatus: function() { 
                     const weekId = parseInt(document.getElementById('dash-week').value); 
                     const weekName = System.data.weeks.find(w => w.id === weekId)?.name || '-'; 
@@ -2596,17 +2694,17 @@
                     this.renderReport();
                 },
                 updateReportStages: function() {
-                    const sSel = document.getElementById('res-rep-stage');
-                    if(!sSel) return;
-                    sSel.innerHTML = '<option value="all">كل المراحل</option>';
+                    const sel = document.getElementById('res-rep-stage');
+                    if(!sel) return;
+                    sel.innerHTML = '<option value="all">كل المراحل</option>';
                     const schoolIdStr = document.getElementById('res-rep-school').value;
                     const targetSchoolId = ['admin', 'supervisor', 'manager'].includes(System.currentUser.role) && schoolIdStr !== 'all' && schoolIdStr ? parseInt(schoolIdStr) : System.currentUser.schoolId;
 
                     if (targetSchoolId) {
                         const school = System.data.schools.find(s => s.id === targetSchoolId);
-                        if (school && school.stages) school.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
+                        if (school && school.stages) school.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${st.name}</option>`);
                     } else if (['admin', 'supervisor', 'manager'].includes(System.currentUser.role)) {
-                        System.data.schools.forEach(s => s.stages.forEach(st => sSel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
+                        System.data.schools.forEach(s => s.stages.forEach(st => sel.innerHTML += `<option value="${st.id}">${s.name} - ${st.name}</option>`));
                     }
                     this.updateReportTeachers();
                 },
@@ -3247,9 +3345,12 @@
                     }
                 },
                 previewImage: function(b64) {
-                    document.getElementById('preview-image-elem').src = b64;
-                    document.getElementById('download-image-btn').href = b64;
-                    new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                    const previewElem = document.getElementById('preview-image-elem');
+                    if(previewElem) previewElem.src = b64;
+                    const downloadBtn = document.getElementById('download-image-btn');
+                    if(downloadBtn) downloadBtn.href = b64;
+                    const modalEl = document.getElementById('imagePreviewModal');
+                    if(modalEl) new bootstrap.Modal(modalEl).show();
                 }
             },
 
@@ -3257,14 +3358,16 @@
                 initAssign: function() {
                     System.utils.populateSchools('task-assign-school');
                     this.updateAssignTeachers();
-                    document.getElementById('task-assign-date').valueAsDate = new Date();
+                    const dateInput = document.getElementById('task-assign-date');
+                    if(dateInput) dateInput.valueAsDate = new Date();
                     this.renderAssignList();
                 },
                 updateAssignTeachers: function() {
                     const sel = document.getElementById('task-assign-teacher');
                     if (!sel) return;
                     sel.innerHTML = '<option value="">اختر المعلم...</option>';
-                    const filterSchool = document.getElementById('task-assign-school').value;
+                    const filterSchoolEl = document.getElementById('task-assign-school');
+                    const filterSchool = filterSchoolEl ? filterSchoolEl.value : null;
                     System.data.users.filter(u => u.role === 'teacher').forEach(t => {
                         if(filterSchool !== 'all' && t.schoolId != filterSchool) return;
                         sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
@@ -3292,8 +3395,8 @@
                     System.save();
                     System.utils.showAlert('تم إسناد التكليف بنجاح.');
                     
-                    document.getElementById('task-assign-title').value = '';
-                    document.getElementById('task-assign-details').value = '';
+                    if(document.getElementById('task-assign-title')) document.getElementById('task-assign-title').value = '';
+                    if(document.getElementById('task-assign-details')) document.getElementById('task-assign-details').value = '';
                     this.renderAssignList();
                 },
                 renderAssignList: function() {
@@ -3322,7 +3425,8 @@
                         System.data.tasks = System.data.tasks.filter(t => t.id !== id);
                         System.save();
                         this.renderAssignList();
-                        if(document.getElementById('view-tasks-list') && !document.getElementById('view-tasks-list').classList.contains('hidden')) {
+                        const taskList = document.getElementById('view-tasks-list');
+                        if(taskList && !taskList.classList.contains('hidden')) {
                             this.renderList();
                         }
                     }
@@ -3335,7 +3439,8 @@
                     const sel = document.getElementById('task-list-teacher');
                     if (!sel) return;
                     sel.innerHTML = '<option value="all">جميع المعلمين</option>';
-                    const filterSchool = document.getElementById('task-list-school').value;
+                    const filterSchoolEl = document.getElementById('task-list-school');
+                    const filterSchool = filterSchoolEl ? filterSchoolEl.value : null;
                     System.data.users.filter(u => u.role === 'teacher').forEach(t => {
                         if(filterSchool !== 'all' && t.schoolId != filterSchool) return;
                         sel.innerHTML += `<option value="${t.id}">${t.name}</option>`;
@@ -3347,9 +3452,12 @@
                     if(!tbody) return;
                     tbody.innerHTML = '';
                     
-                    const filterSchool = document.getElementById('task-list-school').value;
-                    const filterTeacher = document.getElementById('task-list-teacher').value;
-                    const filterStatus = document.getElementById('task-list-status').value;
+                    const filterSchoolEl = document.getElementById('task-list-school');
+                    const filterSchool = filterSchoolEl ? filterSchoolEl.value : null;
+                    const filterTeacherEl = document.getElementById('task-list-teacher');
+                    const filterTeacher = filterTeacherEl ? filterTeacherEl.value : null;
+                    const filterStatusEl = document.getElementById('task-list-status');
+                    const filterStatus = filterStatusEl ? filterStatusEl.value : null;
                     
                     const statusMap = { 'pending': '<span class="badge bg-warning text-dark">قيد الانتظار</span>', 'done': '<span class="badge bg-success">تم التنفيذ</span>', 'not_done': '<span class="badge bg-danger">لم يتم التنفيذ</span>' };
                     
@@ -3383,7 +3491,8 @@
                     document.getElementById('task-status-id').value = t.id;
                     document.getElementById('task-status-select').value = t.status === 'pending' ? 'done' : t.status;
                     document.getElementById('task-status-notes').value = t.notes || '';
-                    new bootstrap.Modal(document.getElementById('taskStatusModal')).show();
+                    const modalEl = document.getElementById('taskStatusModal');
+                    if(modalEl) new bootstrap.Modal(modalEl).show();
                 },
                 saveStatus: function() {
                     const id = parseInt(document.getElementById('task-status-id').value);
@@ -3397,11 +3506,14 @@
                         System.save();
                         
                         const modalEl = document.getElementById('taskStatusModal');
-                        const modal = bootstrap.Modal.getInstance(modalEl);
-                        if(modal) modal.hide();
+                        if(modalEl) {
+                            const modal = bootstrap.Modal.getInstance(modalEl);
+                            if(modal) modal.hide();
+                        }
                         
                         this.renderList();
-                        if(document.getElementById('view-tasks-assign') && !document.getElementById('view-tasks-assign').classList.contains('hidden')) {
+                        const assignView = document.getElementById('view-tasks-assign');
+                        if(assignView && !assignView.classList.contains('hidden')) {
                             this.renderAssignList();
                         }
                     }
@@ -3409,30 +3521,36 @@
             },
 
             meetings: {
+                currentEditImages: [], 
                 init: function() {
                     const dateInput = document.getElementById('meet-date');
-                    dateInput.valueAsDate = new Date();
+                    if(dateInput) dateInput.valueAsDate = new Date();
                     
                     const timeInput = document.getElementById('meet-time');
                     const now = new Date();
                     const hours = String(now.getHours()).padStart(2, '0');
                     const minutes = String(now.getMinutes()).padStart(2, '0');
-                    timeInput.value = `${hours}:${minutes}`;
+                    if(timeInput) timeInput.value = `${hours}:${minutes}`;
 
-                    this.updateDayName(dateInput.value);
-                    dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
+                    if(dateInput) {
+                        this.updateDayName(dateInput.value);
+                        dateInput.addEventListener('change', (e) => this.updateDayName(e.target.value));
+                    }
 
                     this.renderMembersSelect();
                     this.renderList();
+                    this.resetForm();
                 },
                 updateDayName: function(dateStr) {
                     if(!dateStr) return;
                     const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
                     const d = new Date(dateStr);
-                    document.getElementById('meet-day').value = days[d.getDay()];
+                    const dayInput = document.getElementById('meet-day');
+                    if(dayInput) dayInput.value = days[d.getDay()];
                 },
                 renderMembersSelect: function() {
                     const container = document.getElementById('meet-members-container');
+                    if(!container) return;
                     container.innerHTML = '';
                     const user = System.currentUser;
                     
@@ -3461,13 +3579,18 @@
                     checks.forEach(c => { if(!c.checked) allChecked = false; });
                     checks.forEach(c => c.checked = !allChecked);
                 },
-                add: async function() {
+                save: async function() {
+                    const editId = document.getElementById('meet-edit-id').value;
                     const title = document.getElementById('meet-title').value.trim();
                     const date = document.getElementById('meet-date').value;
                     const time = document.getElementById('meet-time').value;
                     const day = document.getElementById('meet-day').value;
+                    const objectives = document.getElementById('meet-objectives').value.trim();
+                    const agenda = document.getElementById('meet-agenda').value.trim();
                     const minutes = document.getElementById('meet-minutes').value.trim();
                     const recommendations = document.getElementById('meet-recommendations').value.trim();
+                    const nextSteps = document.getElementById('meet-next-steps').value.trim();
+                    const nextDate = document.getElementById('meet-next-date').value;
                     const evidenceInput = document.getElementById('meet-evidence');
                     
                     const selectedMembers = [];
@@ -3479,10 +3602,10 @@
                         return System.utils.showAlert('الرجاء كتابة عنوان الاجتماع وتحديد التاريخ واختيار عضو واحد على الأقل.');
                     }
 
-                    // Process images
-                    let evidencesBase64 = [];
-                    if(evidenceInput.files && evidenceInput.files.length > 0) {
-                        System.utils.showAlert("جاري معالجة الصور... يرجى الانتظار");
+                    // Process NEW images
+                    let evidencesBase64 = this.currentEditImages || [];
+                    if(evidenceInput && evidenceInput.files && evidenceInput.files.length > 0) {
+                        System.utils.showAlert("جاري معالجة البيانات والصور... يرجى الانتظار");
                         for(let i=0; i<evidenceInput.files.length; i++) {
                             const file = evidenceInput.files[i];
                             if(file.size > 3000000) {
@@ -3498,39 +3621,133 @@
                         }
                     }
 
-                    const newMeeting = {
-                        id: Date.now(),
-                        creatorId: System.currentUser.id,
-                        schoolId: System.currentUser.schoolId,
-                        title: title,
-                        date: date,
-                        time: time,
-                        day: day,
-                        minutes: minutes,
-                        recommendations: recommendations,
-                        members: selectedMembers,
-                        evidences: evidencesBase64
-                    };
+                    if(!System.data.meetings) System.data.meetings = [];
 
-                    System.data.meetings.push(newMeeting);
+                    if(editId) {
+                        // Update existing
+                        const idx = System.data.meetings.findIndex(m => m.id === parseInt(editId));
+                        if(idx > -1) {
+                            // الحفاظ على حالة الحضور القديمة للأعضاء الذين ما زالوا محددين
+                            const oldMembers = System.data.meetings[idx].members;
+                            selectedMembers.forEach(newMem => {
+                                const oldMem = oldMembers.find(o => o.teacherId === newMem.teacherId);
+                                if(oldMem) newMem.present = oldMem.present;
+                            });
+
+                            System.data.meetings[idx] = {
+                                ...System.data.meetings[idx],
+                                title, date, time, day, objectives, agenda, minutes, recommendations, nextSteps, nextDate,
+                                members: selectedMembers, evidences: evidencesBase64
+                            };
+                            System.utils.showAlert('تم تعديل الاجتماع المهني بنجاح.');
+                        }
+                    } else {
+                        // Create new
+                        const newMeeting = {
+                            id: Date.now(),
+                            creatorId: System.currentUser.id,
+                            schoolId: System.currentUser.schoolId,
+                            title, date, time, day, objectives, agenda, minutes, recommendations, nextSteps, nextDate,
+                            members: selectedMembers, evidences: evidencesBase64
+                        };
+                        System.data.meetings.push(newMeeting);
+                        System.utils.showAlert('تم حفظ الاجتماع المهني بنجاح.');
+                    }
+
                     System.save();
-                    System.utils.showAlert('تم حفظ الاجتماع المهني بنجاح.');
-                    
-                    // Reset Form
+                    this.resetForm();
+                    this.renderList();
+                },
+                resetForm: function() {
+                    document.getElementById('meet-edit-id').value = '';
+                    const formTitle = document.getElementById('meet-form-title');
+                    if(formTitle) formTitle.innerText = 'إنشاء اجتماع جديد';
                     document.getElementById('meet-title').value = '';
+                    document.getElementById('meet-objectives').value = '';
+                    document.getElementById('meet-agenda').value = '';
                     document.getElementById('meet-minutes').value = '';
                     document.getElementById('meet-recommendations').value = '';
+                    document.getElementById('meet-next-steps').value = '';
+                    document.getElementById('meet-next-date').value = '';
                     document.getElementById('meet-evidence').value = '';
+                    const imgContainer = document.getElementById('meet-edit-images-container');
+                    if(imgContainer) imgContainer.innerHTML = '';
+                    const btnSave = document.getElementById('btn-save-meet');
+                    if(btnSave) btnSave.innerHTML = '<i class="fas fa-save ms-2"></i>حفظ الاجتماع';
+                    const btnCancel = document.getElementById('btn-cancel-meet');
+                    if(btnCancel) btnCancel.classList.add('hidden');
                     document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
+                    this.currentEditImages = [];
+                },
+                edit: function(id) {
+                    const m = System.data.meetings.find(x => x.id === id);
+                    if(!m) return;
+
+                    // تعبئة الحقول
+                    document.getElementById('meet-edit-id').value = m.id;
+                    const formTitle = document.getElementById('meet-form-title');
+                    if(formTitle) formTitle.innerText = 'تعديل اجتماع: ' + m.title;
                     
-                    this.renderList();
+                    document.getElementById('meet-title').value = m.title;
+                    document.getElementById('meet-date').value = m.date;
+                    document.getElementById('meet-time').value = m.time || '';
+                    document.getElementById('meet-day').value = m.day || '';
+                    document.getElementById('meet-objectives').value = m.objectives || '';
+                    document.getElementById('meet-agenda').value = m.agenda || '';
+                    document.getElementById('meet-minutes').value = m.minutes || '';
+                    document.getElementById('meet-recommendations').value = m.recommendations || '';
+                    document.getElementById('meet-next-steps').value = m.nextSteps || '';
+                    document.getElementById('meet-next-date').value = m.nextDate || '';
+
+                    // تحديد الأعضاء
+                    document.querySelectorAll('.meet-member-check').forEach(c => c.checked = false);
+                    m.members.forEach(mem => {
+                        const cb = document.getElementById(`meet_mem_${mem.teacherId}`);
+                        if(cb) cb.checked = true;
+                    });
+
+                    // تحميل الصور القديمة في واجهة التعديل
+                    this.currentEditImages = m.evidences ? [...m.evidences] : [];
+                    this.renderEditImages();
+
+                    // تغيير شكل الأزرار
+                    const btnSave = document.getElementById('btn-save-meet');
+                    if(btnSave) btnSave.innerHTML = '<i class="fas fa-sync ms-2"></i>تحديث البيانات';
+                    const btnCancel = document.getElementById('btn-cancel-meet');
+                    if(btnCancel) btnCancel.classList.remove('hidden');
+
+                    // التمرير لأعلى الصفحة
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+                renderEditImages: function() {
+                    const container = document.getElementById('meet-edit-images-container');
+                    if(!container) return;
+                    container.innerHTML = '';
+                    if(this.currentEditImages && this.currentEditImages.length > 0) {
+                        container.innerHTML = '<div class="w-100 mb-1 small text-muted">الصور الحالية (اضغط على علامة X للحذف):</div>';
+                        this.currentEditImages.forEach((imgB64, index) => {
+                            container.innerHTML += `
+                                <div class="position-relative d-inline-block">
+                                    <img src="${imgB64}" class="evidence-img-thumb" style="width: 80px; height: 80px;">
+                                    <button class="btn btn-danger btn-sm position-absolute top-0 start-0 m-1" style="padding: 0 5px;" onclick="System.meetings.removeEditImage(${index})"><i class="fas fa-times"></i></button>
+                                </div>
+                            `;
+                        });
+                    }
+                },
+                removeEditImage: function(index) {
+                    if(confirm("حذف هذه الصورة من المرفقات؟")) {
+                        this.currentEditImages.splice(index, 1);
+                        this.renderEditImages();
+                    }
                 },
                 renderList: function() {
                     const tbody = document.querySelector('#meetings-table tbody');
+                    if(!tbody) return;
                     tbody.innerHTML = '';
                     const user = System.currentUser;
 
-                    let myMeetings = [...System.data.meetings].reverse();
+                    let myMeetings = [...(System.data.meetings || [])].reverse();
                     if(!['admin', 'supervisor', 'manager'].includes(user.role)) {
                         myMeetings = myMeetings.filter(m => m.schoolId === user.schoolId);
                     }
@@ -3553,8 +3770,9 @@
                             <td>${membersCount}</td>
                             <td><span class="badge bg-${percentage >= 80 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}">${percentage}%</span></td>
                             <td>
-                                <button class="btn btn-sm btn-info text-white shadow-sm" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
-                                ${allowEdit ? `<button class="btn btn-sm btn-outline-danger shadow-sm ms-1" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
+                                <button class="btn btn-sm btn-info text-white shadow-sm" title="عرض" onclick="System.meetings.openDetails(${m.id})"><i class="fas fa-eye"></i></button>
+                                ${allowEdit ? `<button class="btn btn-sm btn-warning text-dark shadow-sm ms-1" title="تعديل" onclick="System.meetings.edit(${m.id})"><i class="fas fa-edit"></i></button>` : ''}
+                                ${allowEdit ? `<button class="btn btn-sm btn-outline-danger shadow-sm ms-1" title="حذف" onclick="System.meetings.deleteMeeting(${m.id})"><i class="fas fa-trash"></i></button>` : ''}
                             </td>
                         </tr>`;
                     });
@@ -3564,50 +3782,68 @@
                     if(!m) return;
                     
                     document.getElementById('manage-meet-id').value = m.id;
-                    document.getElementById('manage-meet-title').innerText = m.title;
-                    document.getElementById('manage-meet-date').innerText = `${m.date} (${m.day})`;
-                    document.getElementById('manage-meet-time').innerText = m.time || 'غير محدد';
-                    document.getElementById('manage-meet-minutes').innerText = m.minutes || 'لا يوجد محضر مسجل.';
-                    document.getElementById('manage-meet-rec').innerText = m.recommendations || 'لا توجد توصيات.';
+                    const titleEl = document.getElementById('manage-meet-title');
+                    if(titleEl) titleEl.innerText = m.title;
+                    const dateEl = document.getElementById('manage-meet-date');
+                    if(dateEl) dateEl.innerText = `${m.date} (${m.day})`;
+                    const timeEl = document.getElementById('manage-meet-time');
+                    if(timeEl) timeEl.innerText = m.time || 'غير محدد';
+                    const nextDateEl = document.getElementById('manage-meet-next-date');
+                    if(nextDateEl) nextDateEl.innerText = m.nextDate || 'لم يتم تحديده';
+                    
+                    const objEl = document.getElementById('manage-meet-objectives');
+                    if(objEl) objEl.innerText = m.objectives || 'لا توجد أهداف مسجلة.';
+                    const agendaEl = document.getElementById('manage-meet-agenda');
+                    if(agendaEl) agendaEl.innerText = m.agenda || 'لا يوجد جدول أعمال مسجل.';
+                    const minEl = document.getElementById('manage-meet-minutes');
+                    if(minEl) minEl.innerText = m.minutes || 'لا يوجد محضر مسجل.';
+                    const recEl = document.getElementById('manage-meet-rec');
+                    if(recEl) recEl.innerText = m.recommendations || 'لا توجد توصيات.';
+                    const nextEl = document.getElementById('manage-meet-next-steps');
+                    if(nextEl) nextEl.innerText = m.nextSteps || 'لا توجد خطوات تالية مسجلة.';
 
                     const attTbody = document.querySelector('#meet-attendance-table tbody');
-                    attTbody.innerHTML = '';
-                    
-                    m.members.forEach(mem => {
-                        const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
-                        const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
-                        const text = mem.present ? 'حاضر' : 'غائب';
-                        const icon = mem.present ? 'fa-check' : 'fa-times';
-                        
-                        attTbody.innerHTML += `<tr>
-                            <td class="fw-bold">${tName}</td>
-                            <td>
-                                <span class="badge ${badgeClass} fs-6 attendance-toggle shadow-sm" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
-                                    <i class="fas ${icon} ms-1"></i>${text}
-                                </span>
-                            </td>
-                        </tr>`;
-                    });
-
-                    const evContainer = document.getElementById('manage-meet-evidences-container');
-                    evContainer.innerHTML = '';
-                    if(m.evidences && m.evidences.length > 0) {
-                        m.evidences.forEach(evB64 => {
-                            const img = document.createElement('img');
-                            img.src = evB64;
-                            img.className = 'evidence-img-thumb';
-                            img.onclick = () => {
-                                document.getElementById('preview-image-elem').src = evB64;
-                                document.getElementById('download-image-btn').href = evB64;
-                                new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
-                            };
-                            evContainer.appendChild(img);
+                    if(attTbody) {
+                        attTbody.innerHTML = '';
+                        m.members.forEach(mem => {
+                            const tName = System.data.users.find(u => u.id === mem.teacherId)?.name || 'مستخدم محذوف';
+                            const badgeClass = mem.present ? 'bg-success' : 'bg-danger';
+                            const text = mem.present ? 'حاضر' : 'غائب';
+                            const icon = mem.present ? 'fa-check' : 'fa-times';
+                            
+                            attTbody.innerHTML += `<tr>
+                                <td class="fw-bold">${tName}</td>
+                                <td>
+                                    <span class="badge ${badgeClass} fs-6 attendance-toggle shadow-sm" onclick="System.meetings.toggleAttendance(${m.id}, ${mem.teacherId})">
+                                        <i class="fas ${icon} ms-1"></i>${text}
+                                    </span>
+                                </td>
+                            </tr>`;
                         });
-                    } else {
-                        evContainer.innerHTML = '<span class="text-muted small">لا توجد صور أو شواهد مرفقة.</span>';
                     }
 
-                    new bootstrap.Modal(document.getElementById('meetingDetailsModal')).show();
+                    const evContainer = document.getElementById('manage-meet-evidences-container');
+                    if(evContainer) {
+                        evContainer.innerHTML = '';
+                        if(m.evidences && m.evidences.length > 0) {
+                            m.evidences.forEach(evB64 => {
+                                const img = document.createElement('img');
+                                img.src = evB64;
+                                img.className = 'evidence-img-thumb';
+                                img.onclick = () => {
+                                    document.getElementById('preview-image-elem').src = evB64;
+                                    document.getElementById('download-image-btn').href = evB64;
+                                    new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+                                };
+                                evContainer.appendChild(img);
+                            });
+                        } else {
+                            evContainer.innerHTML = '<span class="text-muted small">لا توجد صور أو شواهد مرفقة.</span>';
+                        }
+                    }
+
+                    const modalEl = document.getElementById('meetingDetailsModal');
+                    if(modalEl) new bootstrap.Modal(modalEl).show();
                 },
                 toggleAttendance: function(meetId, teacherId) {
                     const m = System.data.meetings.find(x => x.id === meetId);
@@ -3681,14 +3917,34 @@
                                 </tr>
                             </table>
 
-                            <div style="margin-bottom: 25px;">
+                            <div style="margin-bottom: 20px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">أهداف الاجتماع:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.objectives || 'لا توجد أهداف مسجلة.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">جدول الأعمال:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.agenda || 'لا يوجد جدول أعمال.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
                                 <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">محضر ونقاط الاجتماع:</h5>
                                 <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.minutes || 'لا توجد بيانات.'}</div>
                             </div>
 
-                            <div style="margin-bottom: 25px;">
+                            <div style="margin-bottom: 20px;">
                                 <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">التوصيات:</h5>
                                 <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.recommendations || 'لا توجد توصيات.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">الخطوات التالية:</h5>
+                                <div style="white-space: pre-wrap; line-height: 1.8; text-align: justify; padding: 10px; background: #fdfdfd; border: 1px solid #eee;">${m.nextSteps || 'لا توجد خطوات تالية مسجلة.'}</div>
+                            </div>
+
+                            <div style="margin-bottom: 25px;">
+                                <h5 style="color: #198754; border-bottom: 2px solid #ccc; padding-bottom: 5px; font-weight: bold;">موعد الاجتماع القادم:</h5>
+                                <div style="padding: 10px; font-weight: bold; color: #0d6efd;">${m.nextDate || 'لم يتم تحديده'}</div>
                             </div>
 
                             <div style="page-break-inside: avoid;">
@@ -3724,10 +3980,16 @@
                         </div>
                     `;
 
-                    document.getElementById('print-area-container').innerHTML = content;
-                    document.body.classList.add('printing-special');
-                    window.print();
-                    document.body.classList.remove('printing-special');
+                    const printArea = document.getElementById('print-area-container');
+                    if(printArea) {
+                        printArea.innerHTML = content;
+                        document.body.classList.add('printing-special');
+                        setTimeout(() => {
+                            window.print();
+                            document.body.classList.remove('printing-special');
+                            document.getElementById('print-area-container').innerHTML = '';
+                        }, 100);
+                    }
                 }
             },
 
@@ -3738,8 +4000,10 @@
                 }, 
                 updateTeachers: function() {
                     const sel = document.getElementById('file-teacher-select');
+                    if(!sel) return;
                     sel.innerHTML = '<option value="">اختر المعلم...</option>';
-                    const filterSchool = document.getElementById('file-school-select').value;
+                    const filterSchoolEl = document.getElementById('file-school-select');
+                    const filterSchool = filterSchoolEl ? filterSchoolEl.value : null;
                     const isCoord = System.currentUser.role === 'coordinator';
                     const mySchool = System.currentUser.schoolId;
 
@@ -3753,11 +4017,18 @@
                     });
                 },
                 render: function() { 
-                    const tid = parseInt(document.getElementById('file-teacher-select').value); 
-                    if(!tid) return document.getElementById('teacher-file-content').classList.add('hidden'); 
-                    document.getElementById('teacher-file-content').classList.remove('hidden'); 
+                    const tSel = document.getElementById('file-teacher-select');
+                    const tid = tSel ? parseInt(tSel.value) : null; 
+                    const contentDiv = document.getElementById('teacher-file-content');
+                    if(!tid) {
+                        if(contentDiv) contentDiv.classList.add('hidden'); 
+                        return;
+                    }
+                    if(contentDiv) contentDiv.classList.remove('hidden'); 
                     
                     const t = System.data.users.find(u => u.id === tid); 
+                    if(!t) return;
+                    
                     const schoolName = System.data.schools.find(s=>s.id === t.schoolId)?.name || '-'; 
                     document.getElementById('tf-name').innerText = t.name; 
                     document.getElementById('tf-school').innerText = schoolName; 
@@ -3769,7 +4040,7 @@
                     const violations = System.data.procedures.filter(p => p.teacherId === tid && p.type === 'violation'); 
                     
                     const gapsTable = document.querySelector('#table-gaps tbody'); 
-                    gapsTable.innerHTML = ''; 
+                    if(gapsTable) gapsTable.innerHTML = ''; 
                     let gapVisitsCount = 0; 
                     const distinctVisits = []; 
                     
@@ -3795,7 +4066,7 @@
                             const missingNames = missingCriteria.map(c => c.name); 
                             const missingCount = missingCriteria.length; 
                             
-                            if(missingCount > 0) { 
+                            if(missingCount > 0 && gapsTable) { 
                                 gapVisitsCount++; 
                                 const performance = Math.round((presentIds.length / System.data.criteria.length) * 100); 
                                 gapsTable.innerHTML += `<tr><td>${className}</td><td>${weekName}</td><td>${subName}</td><td>${date}</td><td class="text-danger fw-bold text-center">${missingCount}</td><td class="small text-muted">${missingNames.join(' ، ')}</td><td><span class="badge bg-${performance < 50 ? 'danger' : 'warning'}">${performance}%</span></td></tr>`; 
@@ -3804,13 +4075,13 @@
                     }); 
                     
                     const visitsTbody = document.querySelector('#table-visits tbody');
-                    visitsTbody.innerHTML = '';
+                    if(visitsTbody) visitsTbody.innerHTML = '';
                     const teacherVisits = (System.data.visits || []).filter(v => v.teacherId === tid).sort((a,b) => new Date(a.date) - new Date(b.date));
                     let totalPercent = 0;
                     
-                    if(teacherVisits.length === 0) {
+                    if(teacherVisits.length === 0 && visitsTbody) {
                         visitsTbody.innerHTML = '<tr><td colspan="8" class="text-muted">لا توجد زيارات مسجلة لهذا المعلم</td></tr>';
-                    } else {
+                    } else if(visitsTbody) {
                         teacherVisits.forEach((v, idx) => {
                             totalPercent += v.percentage;
                             const weekName = System.data.weeks.find(w => w.id == v.weekId)?.name || '-';
@@ -3831,59 +4102,62 @@
                         });
                     }
                     const generalAvg = teacherVisits.length > 0 ? Math.round(totalPercent / teacherVisits.length) : 0;
-                    document.getElementById('tf-visits-average').innerText = `${generalAvg}%`;
+                    const avgEl = document.getElementById('tf-visits-average');
+                    if(avgEl) avgEl.innerText = `${generalAvg}%`;
 
                     const role = System.currentUser.role;
                     const resTabBtn = document.getElementById('tab-btn-results');
-                    if (role === 'admin' || role === 'supervisor') {
+                    if (resTabBtn && (role === 'admin' || role === 'supervisor')) {
                         resTabBtn.parentElement.style.display = 'block';
                         
                         const table = document.getElementById('table-tf-results');
-                        table.querySelector('thead').innerHTML = `
-                            <tr>
-                                <th rowspan="2" class="align-middle">الصف والفصل</th>
-                                <th colspan="3" class="table-primary border-primary">الفصل الدراسي الأول</th>
-                                <th colspan="3" class="table-success border-success">الفصل الدراسي الثاني</th>
-                                <th rowspan="2" class="align-middle bg-warning text-dark">المتوسط العام</th>
-                            </tr>
-                            <tr>
-                                <th class="table-primary border-primary">الفترة الأولى</th><th class="table-primary border-primary">الفترة الثانية</th><th class="table-primary border-primary">نهاية الفصل</th>
-                                <th class="table-success border-success">الفترة الأولى</th><th class="table-success border-success">الفترة الثانية</th><th class="table-success border-success">نهاية الفصل</th>
-                            </tr>
-                        `;
-                        const resTbody = table.querySelector('tbody');
-                        const assignments = System.data.assignments.filter(a => a.teacherId === tid);
-                        resTbody.innerHTML = '';
-                        
-                        if(assignments.length === 0) {
-                            resTbody.innerHTML = `<tr><td colspan="8" class="text-muted text-center">لا توجد فصول مسندة للمعلم</td></tr>`;
-                        } else {
-                            assignments.forEach(a => {
-                                let className = '';
-                                System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
-                                    if(c.id === a.classId) className = `${g.name} - ${c.name}`;
-                                }))));
+                        if(table) {
+                            table.querySelector('thead').innerHTML = `
+                                <tr>
+                                    <th rowspan="2" class="align-middle">الصف والفصل</th>
+                                    <th colspan="3" class="table-primary border-primary">الفصل الدراسي الأول</th>
+                                    <th colspan="3" class="table-success border-success">الفصل الدراسي الثاني</th>
+                                    <th rowspan="2" class="align-middle bg-warning text-dark">المتوسط العام</th>
+                                </tr>
+                                <tr>
+                                    <th class="table-primary border-primary">الفترة الأولى</th><th class="table-primary border-primary">الفترة الثانية</th><th class="table-primary border-primary">نهاية الفصل</th>
+                                    <th class="table-success border-success">الفترة الأولى</th><th class="table-success border-success">الفترة الثانية</th><th class="table-success border-success">نهاية الفصل</th>
+                                </tr>
+                            `;
+                            const resTbody = table.querySelector('tbody');
+                            const assignments = System.data.assignments.filter(a => a.teacherId === tid);
+                            resTbody.innerHTML = '';
+                            
+                            if(assignments.length === 0) {
+                                resTbody.innerHTML = `<tr><td colspan="8" class="text-muted text-center">لا توجد فصول مسندة للمعلم</td></tr>`;
+                            } else {
+                                assignments.forEach(a => {
+                                    let className = '';
+                                    System.data.schools.forEach(s => s.stages.forEach(st => st.grades.forEach(g => g.classes.forEach(c => {
+                                        if(c.id === a.classId) className = `${g.name} - ${c.name}`;
+                                    }))));
 
-                                const res = System.data.teacherResults.filter(r => r.teacherId === tid && r.classId === a.classId);
-                                const getVal = (sem, type) => { const rec = res.find(r => r.semester === sem && r.examType === type); return rec ? rec.percentage : null; };
+                                    const res = System.data.teacherResults.filter(r => r.teacherId === tid && r.classId === a.classId);
+                                    const getVal = (sem, type) => { const rec = res.find(r => r.semester === sem && r.examType === type); return rec ? rec.percentage : null; };
 
-                                const vals = [ getVal("1", "p1"), getVal("1", "p2"), getVal("1", "end"), getVal("2", "p1"), getVal("2", "p2"), getVal("2", "end") ];
-                                let total = 0, count = 0;
-                                vals.forEach(v => { if(v !== null) { total += v; count++; } });
-                                const avg = count > 0 ? Math.round(total / count) : '-';
-                                resTbody.innerHTML += `<tr>
-                                    <td class="fw-bold">${className}</td>
-                                    <td>${vals[0]!==null ? vals[0]+'%' : '-'}</td>
-                                    <td>${vals[1]!==null ? vals[1]+'%' : '-'}</td>
-                                    <td class="fw-bold">${vals[2]!==null ? vals[2]+'%' : '-'}</td>
-                                    <td>${vals[3]!==null ? vals[3]+'%' : '-'}</td>
-                                    <td>${vals[4]!==null ? vals[4]+'%' : '-'}</td>
-                                    <td class="fw-bold">${vals[5]!==null ? vals[5]+'%' : '-'}</td>
-                                    <td class="fw-bold text-${avg !== '-' ? (avg < 60 ? 'danger' : (avg < 85 ? 'warning' : 'success')) : 'muted'} bg-light">${avg !== '-' ? avg+'%' : '-'}</td>
-                                </tr>`;
-                            });
+                                    const vals = [ getVal("1", "p1"), getVal("1", "p2"), getVal("1", "end"), getVal("2", "p1"), getVal("2", "p2"), getVal("2", "end") ];
+                                    let total = 0, count = 0;
+                                    vals.forEach(v => { if(v !== null) { total += v; count++; } });
+                                    const avg = count > 0 ? Math.round(total / count) : '-';
+                                    resTbody.innerHTML += `<tr>
+                                        <td class="fw-bold">${className}</td>
+                                        <td>${vals[0]!==null ? vals[0]+'%' : '-'}</td>
+                                        <td>${vals[1]!==null ? vals[1]+'%' : '-'}</td>
+                                        <td class="fw-bold">${vals[2]!==null ? vals[2]+'%' : '-'}</td>
+                                        <td>${vals[3]!==null ? vals[3]+'%' : '-'}</td>
+                                        <td>${vals[4]!==null ? vals[4]+'%' : '-'}</td>
+                                        <td class="fw-bold">${vals[5]!==null ? vals[5]+'%' : '-'}</td>
+                                        <td class="fw-bold text-${avg !== '-' ? (avg < 60 ? 'danger' : (avg < 85 ? 'warning' : 'success')) : 'muted'} bg-light">${avg !== '-' ? avg+'%' : '-'}</td>
+                                    </tr>`;
+                                });
+                            }
                         }
-                    } else {
+                    } else if (resTabBtn) {
                         resTabBtn.parentElement.style.display = 'none';
                     }
 
@@ -3895,7 +4169,9 @@
                     document.getElementById('tf-gaps-count').innerText = gapVisitsCount; 
                     
                     const fillTable = (id, data, hasImage) => { 
-                        const tbody = document.querySelector(`#${id} tbody`); tbody.innerHTML = ''; 
+                        const tbody = document.querySelector(`#${id} tbody`); 
+                        if(!tbody) return;
+                        tbody.innerHTML = ''; 
                         data.forEach(item => { 
                             const imgHtml = hasImage && item.image ? `<img src="${item.image}" class="evidence-img-thumb" onclick="System.procedures.previewImage('${item.image}')">` : '-';
                             tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.situation}</td><td>${item.action}</td><td>${imgHtml}</td></tr>`; 
