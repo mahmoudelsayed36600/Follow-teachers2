@@ -75,6 +75,23 @@
         .checkbox-cell { width: 25px; height: 25px; cursor: pointer; }
         
         .hidden { display: none !important; }
+
+        /* Google Sheets sync UI */
+        .cloud-screen { position: fixed; inset: 0; z-index: 3500; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #0f9d58, #0d6efd); padding: 16px; }
+        .cloud-card { background: #fff; border-radius: 15px; padding: 32px; width: 100%; max-width: 460px; box-shadow: 0 15px 30px rgba(0,0,0,.2); }
+        #cloud-badge { position: fixed; bottom: 14px; left: 14px; z-index: 1500; }
+        #cloud-badge .cloud-pill { background: #fff; border: 1px solid #dee2e6; border-radius: 30px; padding: 6px 14px; font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer; user-select: none; }
+        #cloud-menu { position: absolute; bottom: 42px; left: 0; background: #fff; border: 1px solid #dee2e6; border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.15); min-width: 230px; overflow: hidden; }
+        #cloud-menu button { display: block; width: 100%; text-align: right; border: 0; background: none; padding: 10px 14px; font-size: 14px; }
+        #cloud-menu button:hover { background: #f1f3f5; }
+        .cloud-admin-only { display: none !important; }
+        body.is-admin .cloud-admin-only { display: block !important; }
+        #cloud-toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); z-index: 4000; background: #212529; color: #fff;
+            padding: 10px 18px; border-radius: 30px; font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+        @media print { #cloud-badge, #cloud-toast { display: none !important; } }
         .action-btn { cursor: pointer; margin-left: 5px; opacity: 0.7; transition: 0.2s; }
         .action-btn:hover { opacity: 1; transform: scale(1.1); }
         .cursor-pointer { cursor: pointer; }
@@ -150,6 +167,38 @@
         </div>
         <h5 class="mt-3 text-secondary">جاري الاتصال بقاعدة البيانات...</h5>
     </div>
+
+    <!-- ربط Google Sheets -->
+    <div id="cloud-setup" class="cloud-screen hidden">
+        <div class="cloud-card">
+            <h4 class="mb-2"><i class="fas fa-table text-success ms-2"></i>ربط النظام بـ Google Sheets</h4>
+            <p class="text-muted small mb-3">ألصق رابط تطبيق الويب الذي نسخته من Apps Script بعد النشر (ينتهي بـ /exec).</p>
+            <input id="cloud-url-input" class="form-control" dir="ltr" placeholder="https://script.google.com/macros/s/.../exec">
+            <div id="cloud-setup-msg" class="small mt-2"></div>
+            <button class="btn btn-success w-100 mt-3" onclick="Cloud.saveUrlFromSetup()"><i class="fas fa-link ms-1"></i> اتصال</button>
+        </div>
+    </div>
+
+    <div id="cloud-empty" class="cloud-screen hidden">
+        <div class="cloud-card">
+            <h4 class="mb-2"><i class="fas fa-database text-primary ms-2"></i>قاعدة البيانات جاهزة وفارغة</h4>
+            <p class="text-muted small mb-3">كيف تريد البدء؟ (يظهر هذا مرة واحدة فقط)</p>
+            <button class="btn btn-success w-100 mb-2" data-choice="firebase"><i class="fas fa-cloud-download-alt ms-1"></i> نقل بياناتي القديمة من Firebase</button>
+            <button class="btn btn-outline-primary w-100 mb-2" data-choice="file"><i class="fas fa-file-import ms-1"></i> استيراد من ملف نسخة احتياطية (JSON)</button>
+            <button class="btn btn-outline-secondary w-100" data-choice="new"><i class="fas fa-plus ms-1"></i> البدء بقاعدة بيانات جديدة</button>
+            <div id="cloud-empty-msg" class="small mt-2"></div>
+        </div>
+    </div>
+
+    <div id="cloud-badge" class="hidden">
+        <div id="cloud-menu" class="hidden">
+            <button onclick="Cloud.toggleMenu(false); Cloud.pull(true)"><i class="fas fa-sync ms-2 text-primary"></i>تحديث البيانات الآن</button>
+            <button onclick="Cloud.exportJson()"><i class="fas fa-download ms-2 text-success"></i>تنزيل نسخة احتياطية</button>
+            <button class="cloud-admin-only" onclick="Cloud.importJson()"><i class="fas fa-upload ms-2 text-danger"></i>استيراد نسخة احتياطية</button>
+        </div>
+        <div class="cloud-pill" onclick="Cloud.toggleMenu()"><i id="cloud-badge-icon" class="fas fa-check-circle text-success"></i> <span id="cloud-badge-text">محفوظ في Google Sheets</span></div>
+    </div>
+    <div id="cloud-toast" class="hidden"></div>
 
     <!-- نافذة تنبيه مخصصة -->
     <div class="modal fade" id="customAlertModal" tabindex="-1" aria-hidden="true" style="z-index: 9999;">
@@ -1037,22 +1086,309 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        /* =====================================================================
+           قاعدة البيانات: Google Sheets عبر Google Apps Script
+           ===================================================================== */
+        // ← بعد نشر Apps Script ألصق رابط تطبيق الويب بين علامتي التنصيص (ليعمل على كل الأجهزة تلقائياً)
+        //   إن تركته فارغاً سيطلب الموقع الرابط مرة واحدة على كل جهاز.
+        const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzEQUxSVivOwT8aSWemN0rftBIWjNSV8QghscPuq4N_l69GtRaCXa0PjTCFyNifwOHC/exec";
+        // يجب أن يطابق API_KEY في ملف Code.gs
+        const SHEETS_API_KEY = "Nw4JZp0OZOkpQFADKY0Om0Un";
 
-        const firebaseConfig = {
+        // إعدادات Firebase القديمة — تُستخدم فقط لنقل البيانات القديمة مرة واحدة
+        const OLD_FIREBASE_CONFIG = {
             apiKey: "AIzaSyBccRKZbS8IEmHUSVTuyWeA9Occ7ZcJJBw",
             authDomain: "following-app-2942a.firebaseapp.com",
-            databaseURL: "https://following-app-2942a-default-rtdb.firebaseio.com",
             projectId: "following-app-2942a",
             storageBucket: "following-app-2942a.firebasestorage.app",
             messagingSenderId: "980788870418",
             appId: "1:980788870418:web:73ba8857ce2ee751a547cb"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const dbRef = doc(db, "schoolSystem", "mainDatabase_v1");
+        const Cloud = {
+            synced: {}, chain: Promise.resolve(true), busy: 0, failed: false, alerted: false,
+            pulling: false, retryTimer: null, lastPull: Date.now(), currentView: null, _setupResolve: null,
+
+            url() { return (SHEETS_API_URL || localStorage.getItem('sheetsApiUrl') || '').trim(); },
+
+            async call(action, extra, urlOverride) {
+                const url = urlOverride || this.url();
+                let res;
+                try {
+                    res = await fetch(url, { method: 'POST', body: JSON.stringify(Object.assign({ key: SHEETS_API_KEY, action }, extra || {})) });
+                } catch (e) {
+                    throw new Error('تعذّر الوصول إلى Google Sheets — تحقق من الإنترنت ومن أن النشر بصلاحية "أي شخص"');
+                }
+                const text = await res.text();
+                let j;
+                try { j = JSON.parse(text); }
+                catch (e) { throw new Error('الرابط لا يعيد استجابة صحيحة — تأكد أنه رابط تطبيق الويب وأن الوصول "أي شخص"'); }
+                if (!j.ok) throw new Error(j.error || 'خطأ غير معروف');
+                return j;
+            },
+
+            newRid() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+            isCollection(v) { return Array.isArray(v) && v.every(x => x && typeof x === 'object' && !Array.isArray(x)); },
+
+            // تحويل البيانات إلى سجلات: كل عنصر في كل قائمة = صف في ورقة باسم القائمة
+            toRecords(data) {
+                const out = {}; const meta = new Map();
+                Object.keys(data || {}).forEach(k => {
+                    const v = data[k];
+                    if (v === undefined) return;
+                    if (this.isCollection(v)) {
+                        const m = new Map(); const seen = new Set();
+                        v.forEach(item => {
+                            if (!item._rid || seen.has(item._rid)) item._rid = this.newRid();
+                            seen.add(item._rid);
+                            m.set(item._rid, JSON.stringify(item));
+                        });
+                        out[k] = m;
+                    } else {
+                        meta.set(k, JSON.stringify({ _rid: k, v: v }));
+                    }
+                });
+                out._meta = meta;
+                return out;
+            },
+
+            diff(cur, base) {
+                base = base || this.synced;
+                const changes = [];
+                const names = new Set([...Object.keys(cur), ...Object.keys(base)]);
+                names.forEach(c => {
+                    const a = cur[c] || new Map(), b = base[c] || new Map();
+                    const up = [], del = [];
+                    a.forEach((json, rid) => { if (b.get(rid) !== json) up.push([rid, json]); });
+                    b.forEach((_, rid) => { if (!a.has(rid)) del.push(rid); });
+                    if (up.length || del.length) changes.push({ c, up, del });
+                });
+                return changes;
+            },
+
+            markSynced(data) { this.synced = this.toRecords(data); },
+            markAllUnsynced() { this.synced = {}; },
+
+            async load(urlOverride) {
+                const j = await this.call('load', null, urlOverride);
+                const data = {}; let count = 0;
+                Object.keys(j.collections || {}).forEach(name => {
+                    const items = [];
+                    (j.collections[name] || []).forEach(s => { try { items.push(JSON.parse(s)); } catch (e) { console.error('سجل تالف في', name); } });
+                    count += items.length;
+                    if (name === '_meta') items.forEach(it => { data[it._rid] = it.v; });
+                    else data[name] = items;
+                });
+                return { data, empty: count === 0 };
+            },
+
+            // الحفظ: يرسل فقط السجلات التي تغيّرت، فلا يمسح عمل الأجهزة الأخرى
+            save() {
+                this.busy++; this.setStatus('saving');
+                const p = this.chain.then(() => this.flush());
+                this.chain = p.catch(() => false);
+                return p.then(() => true, (e) => { console.error('Save Error', e); this.onFail(e); return false; })
+                        .finally(() => { this.busy--; if (!this.busy) this.setStatus(this.failed ? 'error' : 'ok'); });
+            },
+
+            async flush() {
+                if (!System.data) return;
+                const cur = this.toRecords(System.data);
+                const changes = this.diff(cur);
+                if (!changes.length) { this.failed = false; return; }
+                await this.call('sync', { changes });
+                this.synced = cur; this.failed = false; this.alerted = false;
+                clearTimeout(this.retryTimer);
+            },
+
+            onFail(e) {
+                this.failed = true; this.setStatus('error');
+                if (!this.alerted) {
+                    this.alerted = true;
+                    System.utils.showAlert('تعذّر الحفظ في Google Sheets: ' + e.message + '\nسيعيد النظام المحاولة تلقائياً — لا تغلق الصفحة.');
+                }
+                clearTimeout(this.retryTimer);
+                this.retryTimer = setTimeout(() => this.save(), 15000);
+            },
+
+            // جلب تحديثات الأجهزة الأخرى
+            async pull(manual) {
+                if (!System.data || !this.url() || this.pulling) return;
+                if (this.busy) { if (manual) this.toast('انتظر انتهاء الحفظ ثم حاول مرة أخرى'); return; }
+                if (this.diff(this.toRecords(System.data)).length) { await this.save(); if (this.failed) return; }
+                this.pulling = true; if (manual) this.setStatus('loading');
+                try {
+                    const loaded = await this.load();
+                    if (loaded.empty || this.busy) return;
+                    if (this.diff(this.toRecords(System.data)).length) return; // تغيير محلي حدث أثناء الجلب
+                    const fresh = this.toRecords(loaded.data);
+                    const changed = this.diff(fresh).length > 0;
+                    if (changed) {
+                        Object.keys(loaded.data).forEach(k => { System.data[k] = loaded.data[k]; });
+                        this.synced = fresh;
+                        if (System.currentUser && System.data.users) {
+                            const f = System.data.users.find(u => u.id === System.currentUser.id);
+                            if (f) { System.currentUser = f; sessionStorage.setItem('currentUser', JSON.stringify(f)); }
+                        }
+                        if (manual) this.refreshView();
+                        else this.toast('وصلت تحديثات من جهاز آخر', 'عرض', () => this.refreshView());
+                    } else if (manual) {
+                        this.toast('البيانات محدّثة');
+                    }
+                } catch (e) {
+                    if (manual) System.utils.showAlert('تعذّر التحديث: ' + e.message);
+                } finally {
+                    this.pulling = false; this.lastPull = Date.now();
+                    if (!this.busy) this.setStatus(this.failed ? 'error' : 'ok');
+                }
+            },
+
+            refreshView() {
+                try {
+                    if (System.ui.updateNotificationCount) System.ui.updateNotificationCount();
+                    if (this.currentView) System.ui.showView(this.currentView);
+                } catch (e) { console.error(e); }
+            },
+
+            /* ---------- شاشة الربط ---------- */
+            showSetup(msg) {
+                return new Promise(resolve => {
+                    document.getElementById('cloud-setup').classList.remove('hidden');
+                    const m = document.getElementById('cloud-setup-msg');
+                    m.className = 'small mt-2 text-danger'; m.textContent = msg || '';
+                    document.getElementById('cloud-url-input').value = localStorage.getItem('sheetsApiUrl') || '';
+                    this._setupResolve = resolve;
+                });
+            },
+            async saveUrlFromSetup() {
+                const url = document.getElementById('cloud-url-input').value.trim();
+                const m = document.getElementById('cloud-setup-msg');
+                if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) {
+                    m.className = 'small mt-2 text-danger'; m.textContent = 'الرابط يجب أن يبدأ بـ https://script.google.com/'; return;
+                }
+                m.className = 'small mt-2 text-primary'; m.textContent = 'جاري التحقق من الاتصال...';
+                try {
+                    await this.call('ping', null, url);
+                    localStorage.setItem('sheetsApiUrl', url);
+                    document.getElementById('cloud-setup').classList.add('hidden');
+                    if (this._setupResolve) this._setupResolve();
+                } catch (e) { m.className = 'small mt-2 text-danger'; m.textContent = 'تعذّر الاتصال: ' + e.message; }
+            },
+
+            /* ---------- قاعدة بيانات فارغة: نقل / استيراد / جديد ---------- */
+            askEmptyDb() {
+                return new Promise(resolve => {
+                    const el = document.getElementById('cloud-empty'); el.classList.remove('hidden');
+                    const msg = document.getElementById('cloud-empty-msg');
+                    const done = d => { el.classList.add('hidden'); resolve(d); };
+                    el.querySelectorAll('[data-choice]').forEach(btn => btn.onclick = async () => {
+                        const c = btn.dataset.choice;
+                        msg.className = 'small mt-2 text-primary'; msg.textContent = '';
+                        try {
+                            if (c === 'new') return done(JSON.parse(JSON.stringify(defaultData)));
+                            if (c === 'firebase') { msg.textContent = 'جاري قراءة بياناتك من Firebase...'; return done(await this.fromFirebase()); }
+                            if (c === 'file') return done(await this.pickJsonFile());
+                        } catch (e) { msg.className = 'small mt-2 text-danger'; msg.textContent = e.message; }
+                    });
+                });
+            },
+            async fromFirebase() {
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js");
+                const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js");
+                const app = initializeApp(OLD_FIREBASE_CONFIG, 'migration-' + Date.now());
+                const snap = await getDoc(doc(getFirestore(app), "schoolSystem", "mainDatabase_v1"));
+                if (!snap.exists()) throw new Error('لم يتم العثور على بيانات في Firebase');
+                return snap.data();
+            },
+            pickJsonFile() {
+                return new Promise((resolve, reject) => {
+                    const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+                    inp.onchange = () => {
+                        const f = inp.files[0]; if (!f) return reject(new Error('لم يتم اختيار ملف'));
+                        const r = new FileReader();
+                        r.onload = () => {
+                            try { const d = JSON.parse(r.result); if (!d || !Array.isArray(d.users)) throw 0; resolve(d); }
+                            catch (e) { reject(new Error('الملف ليس نسخة احتياطية صالحة')); }
+                        };
+                        r.readAsText(f);
+                    };
+                    inp.click();
+                });
+            },
+
+            /* ---------- نسخ احتياطي ---------- */
+            exportJson() {
+                this.toggleMenu(false);
+                const blob = new Blob([JSON.stringify(System.data)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'نسخة-احتياطية-' + new Date().toISOString().slice(0, 10) + '.json';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            },
+            async importJson() {
+                this.toggleMenu(false);
+                if (!System.currentUser || System.currentUser.role !== 'admin') return;
+                if (!confirm('سيتم استبدال كل بيانات المنصة ببيانات الملف على جميع الأجهزة. هل أنت متأكد؟')) return;
+                try {
+                    const d = await this.pickJsonFile();
+                    Object.keys(System.data).forEach(k => { if (!(k in d)) delete System.data[k]; });
+                    Object.assign(System.data, d);
+                    if (await this.save()) { alert('تم الاستيراد بنجاح. سيتم تحديث الصفحة.'); location.reload(); }
+                } catch (e) { System.utils.showAlert(e.message); }
+            },
+
+            /* ---------- واجهة الحالة ---------- */
+            setStatus(s) {
+                const map = {
+                    ok: ['fa-check-circle text-success', 'محفوظ في Google Sheets'],
+                    saving: ['fa-sync fa-spin text-primary', 'جاري الحفظ...'],
+                    loading: ['fa-sync fa-spin text-primary', 'جاري التحديث...'],
+                    error: ['fa-exclamation-triangle text-danger', 'لم يُحفظ — إعادة المحاولة...']
+                };
+                const v = map[s] || map.ok;
+                const ic = document.getElementById('cloud-badge-icon'), tx = document.getElementById('cloud-badge-text');
+                if (ic) ic.className = 'fas ' + v[0];
+                if (tx) tx.textContent = v[1];
+            },
+            toggleMenu(force) {
+                const m = document.getElementById('cloud-menu');
+                const show = force === undefined ? m.classList.contains('hidden') : force;
+                m.classList.toggle('hidden', !show);
+            },
+            toast(text, actionText, action) {
+                const t = document.getElementById('cloud-toast');
+                t.innerHTML = '';
+                const span = document.createElement('span'); span.textContent = text; t.appendChild(span);
+                if (actionText) {
+                    const b = document.createElement('button'); b.className = 'btn btn-sm btn-light ms-2 me-2 py-0'; b.textContent = actionText;
+                    b.onclick = () => { t.classList.add('hidden'); action(); }; t.appendChild(b);
+                }
+                t.classList.remove('hidden');
+                clearTimeout(this._toastT); this._toastT = setTimeout(() => t.classList.add('hidden'), actionText ? 12000 : 3000);
+            },
+
+            start() {
+                const sv = System.ui.showView;
+                System.ui.showView = function (id) { Cloud.currentView = id; return sv.apply(this, arguments); };
+                const pli = System.auth.postLoginInit;
+                System.auth.postLoginInit = function () {
+                    document.getElementById('cloud-badge').classList.remove('hidden');
+                    return pli.apply(this, arguments);
+                };
+                window.addEventListener('beforeunload', e => { if (Cloud.busy || Cloud.failed) { e.preventDefault(); e.returnValue = ''; } });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && Date.now() - Cloud.lastPull > 20000) Cloud.pull(false);
+                });
+                setInterval(() => {
+                    if (document.visibilityState === 'visible' && Date.now() - Cloud.lastPull > 55000) Cloud.pull(false);
+                }, 60000);
+                document.addEventListener('click', e => {
+                    if (!e.target.closest('#cloud-badge')) { const m = document.getElementById('cloud-menu'); if (m) m.classList.add('hidden'); }
+                });
+            }
+        };
+        window.Cloud = Cloud;
 
         const defaultData = {
             users: [{id: 1, name: 'Admin', username: 'admin', password: 'Ma@521990', role: 'admin', mobile: '966500000000', schoolId: null, scope: {}}],
@@ -1068,17 +1404,26 @@
             init: async function() {
                 document.getElementById('loading-overlay').classList.remove('hidden');
                 try {
-                    const docSnap = await getDoc(dbRef);
-                    if (docSnap.exists()) { 
-                        this.data = docSnap.data(); 
-                        
-                        const arraysToInit = ['users', 'schools', 'subjects', 'weeks', 'criteria', 'assignments', 'evaluations', 'procedures', 'notifications', 'visits', 'teacherResults', 'archives', 'tasks', 'meetings'];
-                        arraysToInit.forEach(key => { if (!this.data[key]) this.data[key] = []; });
-                        if(!this.data.settings) this.data.settings = { schoolLogo: '', deptLogo: '' };
-                    } 
-                    else { 
-                        this.data = JSON.parse(JSON.stringify(defaultData)); 
-                        await setDoc(dbRef, defaultData); 
+                    if (!Cloud.url()) {
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        await Cloud.showSetup();
+                        document.getElementById('loading-overlay').classList.remove('hidden');
+                    }
+                    const loaded = await Cloud.load();
+                    if (loaded.empty) {
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        this.data = await Cloud.askEmptyDb();
+                        document.getElementById('loading-overlay').classList.remove('hidden');
+                        Cloud.markAllUnsynced();
+                    } else {
+                        this.data = loaded.data;
+                        Cloud.markSynced(this.data);
+                    }
+                    const arraysToInit = ['users', 'schools', 'subjects', 'weeks', 'criteria', 'assignments', 'evaluations', 'procedures', 'notifications', 'visits', 'teacherResults', 'archives', 'tasks', 'meetings'];
+                    arraysToInit.forEach(key => { if (!this.data[key]) this.data[key] = []; });
+                    if (!this.data.settings) this.data.settings = { schoolLogo: '', deptLogo: '' };
+                    if (loaded.empty) {
+                        if (!(await Cloud.save())) throw new Error('تعذّر رفع البيانات الأولية إلى Google Sheets');
                     }
 
                     if (!this.data.users.find(u => u.role === 'admin')) {
@@ -1100,15 +1445,17 @@
                         document.getElementById('main-content').classList.add('hidden');
                     }
                 } catch (error) {
-                    console.error("Firebase Error:", error);
-                    System.utils.showAlert("حدث خطأ في الاتصال بقاعدة البيانات. يرجى التأكد من الإنترنت أو إعدادات Firebase.");
+                    console.error("Sheets Error:", error);
+                    if (!SHEETS_API_URL) {
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        Cloud.showSetup('تعذّر الاتصال بقاعدة البيانات: ' + error.message).then(() => location.reload());
+                    } else {
+                        System.utils.showAlert("تعذّر الاتصال بقاعدة بيانات Google Sheets: " + error.message);
+                    }
                 } finally { document.getElementById('loading-overlay').classList.add('hidden'); }
             },
 
-            save: async function() {
-                try { await setDoc(dbRef, this.data); } 
-                catch(e) { console.error("Save Error", e); System.utils.showAlert("فشل الحفظ في قاعدة البيانات!"); }
-            },
+            save: function() { return Cloud.save(); },
 
             auth: {
                 login: function() {
@@ -1353,9 +1700,11 @@
                             archives: savedArchives,
                             settings: System.data.settings
                         };
-                        System.save();
-                        alert("تم مسح كافة البيانات وتفريغ المنصة بنجاح مع الاحتفاظ بالأرشيف.");
-                        location.reload();
+                        System.save().then(ok => {
+                            if (!ok) return;
+                            alert("تم مسح كافة البيانات وتفريغ المنصة بنجاح مع الاحتفاظ بالأرشيف.");
+                            location.reload();
+                        });
                     } else {
                         alert("كلمة المرور خاطئة. تم إلغاء العملية.");
                     }
@@ -1409,9 +1758,11 @@
                             const currentArchives = System.data.archives; 
                             System.data = JSON.parse(JSON.stringify(arc.snapshot));
                             System.data.archives = currentArchives; 
-                            System.save();
-                            alert('تم استعادة بيانات الأرشيف بنجاح. سيتم تحديث الصفحة.');
-                            location.reload();
+                            System.save().then(ok => {
+                                if (!ok) return;
+                                alert('تم استعادة بيانات الأرشيف بنجاح. سيتم تحديث الصفحة.');
+                                location.reload();
+                            });
                         }
                     }
                 },
@@ -4189,7 +4540,9 @@
         };
 
         window.System = System;
-        document.addEventListener('DOMContentLoaded', () => System.init());
+        Cloud.start();
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => System.init());
+        else System.init();
     </script>
 </body>
 </html>
